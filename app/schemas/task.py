@@ -1,14 +1,49 @@
-from pydantic import BaseModel
+from typing import Optional
+from pydantic import BaseModel, field_validator, model_validator
 
 
 class TaskCreate(BaseModel):
     title: str
     completed: bool = False
 
+    @field_validator("title")
+    def title_must_not_be_empty(cls, value):
+        value = value.strip()
+        if not value:
+            raise ValueError("Title must not be empty")
+        return value
 
-class TaskUpdate(BaseModel):
+
+class TaskPut(BaseModel):
     title: str
     completed: bool
+
+    @field_validator("title")
+    def title_must_not_be_empty(cls, value):
+        value = value.strip()
+        if not value:
+            raise ValueError("Title must not be empty")
+        return value
+
+
+class TaskUpdate(BaseModel):
+    title: Optional[str] = None
+    completed: Optional[bool] = None
+
+    @field_validator("title")
+    def title_must_not_be_empty(cls, value):
+        if value is None:
+            return value
+        value = value.strip()
+        if not value:
+            raise ValueError("Title must not be empty")
+        return value
+
+    @model_validator(mode="after")
+    def at_least_one_field(self):
+        if self.title is None and self.completed is None:
+            raise ValueError("At least one field must be provided")
+        return self
 
 
 class TaskResponse(BaseModel):
