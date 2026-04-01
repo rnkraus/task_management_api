@@ -1,5 +1,32 @@
-tasks = []
-task_id_counter = 1
+import json
+from app.core.config import DATA_FILE
+
+def load_tasks():
+    if not DATA_FILE.exists():
+        DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(DATA_FILE, "w", encoding="utf-8") as file:
+            json.dump([], file)
+        return []
+
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except json.JSONDecodeError:
+        return []
+
+
+def save_tasks():
+    with open(DATA_FILE, "w", encoding="utf-8") as file:
+        json.dump(tasks, file, indent=4)
+
+
+def get_next_task_id():
+    if not tasks:
+        return 1
+    return max(task["id"] for task in tasks) + 1
+
+tasks = load_tasks()
+task_id_counter = get_next_task_id()
 
 
 def create_task(task_data):
@@ -12,6 +39,7 @@ def create_task(task_data):
     }
 
     tasks.append(new_task)
+    save_tasks()
     task_id_counter += 1
     return new_task
 
@@ -32,6 +60,7 @@ def update_task(task_id: int, task_data):
         if task["id"] == task_id:
             task["title"] = task_data.title
             task["completed"] = task_data.completed
+            save_tasks()
             return task
     return None
 
@@ -43,6 +72,7 @@ def patch_task(task_id: int, task_data):
                 task["title"] = task_data.title
             if task_data.completed is not None:
                 task["completed"] = task_data.completed
+            save_tasks()
             return task
     return None
 
@@ -50,5 +80,7 @@ def patch_task(task_id: int, task_data):
 def delete_task(task_id: int):
     for index, task in enumerate(tasks):
         if task["id"] == task_id:
-            return tasks.pop(index)
+            deleted_task = tasks.pop(index)
+            save_tasks()
+            return deleted_task
     return None
