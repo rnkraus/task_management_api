@@ -1,4 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+
+from app.core.db import get_db
 from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskPut
 from app.services.task_service import (
     create_task,
@@ -14,26 +17,26 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
 @router.post("", response_model=TaskResponse)
-def create_task_endpoint(task: TaskCreate):
-    return create_task(task)
+def create_task_endpoint(task: TaskCreate, db: Session = Depends(get_db)):
+    return create_task(db, task)
 
 
 @router.get("", response_model=list[TaskResponse])
-def read_tasks():
-    return get_all_tasks()
+def read_tasks(db: Session = Depends(get_db)):
+    return get_all_tasks(db)
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
-def read_task(task_id: int):
-    task = get_task_by_id(task_id)
+def read_task(task_id: int, db: Session = Depends(get_db)):
+    task = get_task_by_id(db, task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
 
 @router.put("/{task_id}", response_model=TaskResponse)
-def update_task_endpoint(task_id: int, task: TaskPut):
-    updated_task = update_task_service(task_id, task)
+def update_task_endpoint(task_id: int, task: TaskPut, db: Session = Depends(get_db)):
+    updated_task = update_task_service(db, task_id, task)
 
     if updated_task is None:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -42,8 +45,8 @@ def update_task_endpoint(task_id: int, task: TaskPut):
 
 
 @router.patch("/{task_id}", response_model=TaskResponse)
-def patch_task_endpoint(task_id: int, task: TaskUpdate):
-    updated_task = patch_task(task_id, task)
+def patch_task_endpoint(task_id: int, task: TaskUpdate, db: Session = Depends(get_db)):
+    updated_task = patch_task(db, task_id, task)
 
     if updated_task is None:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -52,8 +55,8 @@ def patch_task_endpoint(task_id: int, task: TaskUpdate):
 
 
 @router.delete("/{task_id}", response_model=TaskResponse)
-def delete_task_endpoint(task_id: int):
-    deleted_task = delete_task_service(task_id)
+def delete_task_endpoint(task_id: int, db: Session = Depends(get_db)):
+    deleted_task = delete_task_service(db, task_id)
 
     if deleted_task is None:
         raise HTTPException(status_code=404, detail="Task not found")

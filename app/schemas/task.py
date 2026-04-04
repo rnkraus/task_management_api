@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, field_validator, model_validator, ConfigDict
 
 
 class TaskCreate(BaseModel):
@@ -47,6 +47,8 @@ class TaskUpdate(BaseModel):
 
 
 class TaskResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     title: str
     completed: bool
