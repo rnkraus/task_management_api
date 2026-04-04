@@ -1,26 +1,23 @@
+from pathlib import Path
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env.test", override=True)
+
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.core import config
-from app.services import task_service
+from app.core.db import Base, engine
 
 client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def use_temp_json(tmp_path):
-    test_file = tmp_path / "tasks.json"
-
-    config.DATA_FILE = test_file
-    task_service.tasks = []
-    task_service.task_id_counter = 1
-    task_service.save_tasks()
-
+def reset_db():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
     yield
-
-    task_service.tasks = []
-    task_service.task_id_counter = 1
 
 
 def test_create_task():
