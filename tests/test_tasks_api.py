@@ -2,7 +2,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env.local", override=True)
+load_dotenv(BASE_DIR / ".env.test", override=True)
 
 import pytest
 from fastapi.testclient import TestClient
@@ -28,6 +28,7 @@ def test_create_task():
         "id": 1,
         "title": "1st Task",
         "completed": False,
+        "description": None,
     }
 
 
@@ -39,8 +40,8 @@ def test_get_all_tasks():
 
     assert response.status_code == 200
     assert response.json() == [
-        {"id": 1, "title": "Task A", "completed": False},
-        {"id": 2, "title": "Task B", "completed": False},
+        {"id": 1, "title": "Task A", "completed": False, "description": None},
+        {"id": 2, "title": "Task B", "completed": False, "description": None},
     ]
 
 
@@ -67,6 +68,20 @@ def test_patch_task_title_only():
         "id": 1,
         "title": "New",
         "completed": False,
+        "description": None,
+    }
+
+def test_patch_task_description_only():
+    client.post("/tasks", json={"title": "test", "description": None})
+
+    response = client.patch("/tasks/1", json={"description": "important"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": 1,
+        "title": "test",
+        "completed": False,
+        "description": "important",
     }
 
 
@@ -89,6 +104,7 @@ def test_delete_task():
         "id": 1,
         "title": "To delete",
         "completed": False,
+        "description": None,
     }
     assert get_response.json() == []
 
@@ -103,6 +119,7 @@ def test_get_task_by_id():
         "id": 1,
         "title": "Find me",
         "completed": False,
+        "description": None,
     }
 
 
@@ -119,6 +136,7 @@ def test_put_task():
         "id": 1,
         "title": "Updated title",
         "completed": True,
+        "description": None,
     }
 
 
