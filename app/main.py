@@ -4,7 +4,7 @@ from app.core.db import Base, engine
 
 app = FastAPI()
 
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def root():

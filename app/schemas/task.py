@@ -5,6 +5,7 @@ from pydantic import BaseModel, field_validator, model_validator, ConfigDict
 class TaskCreate(BaseModel):
     title: str
     completed: bool = False
+    description: Optional[str] = None
 
     @field_validator("title")
     def title_must_not_be_empty(cls, value):
@@ -17,6 +18,7 @@ class TaskCreate(BaseModel):
 class TaskPut(BaseModel):
     title: str
     completed: bool
+    description: Optional[str] = None
 
     @field_validator("title")
     def title_must_not_be_empty(cls, value):
@@ -29,6 +31,7 @@ class TaskPut(BaseModel):
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
     completed: Optional[bool] = None
+    description: Optional[str] = None
 
     @field_validator("title")
     def title_must_not_be_empty(cls, value):
@@ -41,7 +44,7 @@ class TaskUpdate(BaseModel):
 
     @model_validator(mode="after")
     def at_least_one_field(self):
-        if self.title is None and self.completed is None:
+        if self.title is None and self.completed is None and self.description is None:
             raise ValueError("At least one field must be provided")
         return self
 
@@ -52,3 +55,4 @@ class TaskResponse(BaseModel):
     id: int
     title: str
     completed: bool
+    description: Optional[str] = None

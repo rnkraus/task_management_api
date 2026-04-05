@@ -7,6 +7,7 @@ def create_task(db:Session, task_data: TaskCreate) -> TaskModel:
     new_task = TaskModel(
         title=task_data.title,
         completed=task_data.completed,
+        description=task_data.description,
     )
     db.add(new_task)
     db.commit()
@@ -29,6 +30,7 @@ def update_task(db: Session,task_id: int, task_data: TaskPut) -> TaskModel | Non
 
         task.title = task_data.title
         task.completed = task_data.completed
+        task.description = task_data.description
 
         db.commit()
         db.refresh(task)
@@ -44,6 +46,8 @@ def patch_task(db: Session, task_id: int, task_data: TaskUpdate) -> TaskModel | 
             task.title = task_data.title
         if task_data.completed is not None:
             task.completed = task_data.completed
+        if task_data.description is not None:
+            task.description = task_data.description
 
         db.commit()
         db.refresh(task)
