@@ -34,7 +34,7 @@ class TaskUpdate(BaseModel):
     title: Optional[str] = None
     completed: Optional[bool] = None
     description: Optional[str] = None
-    user_id: int
+    user_id: Optional[int] = None
 
     @field_validator("title")
     def title_must_not_be_empty(cls, value):
