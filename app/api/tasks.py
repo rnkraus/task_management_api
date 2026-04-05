@@ -18,7 +18,10 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 @router.post("", response_model=TaskResponse)
 def create_task_endpoint(task: TaskCreate, db: Session = Depends(get_db)):
-    return create_task(db, task)
+    try:
+        return create_task(db, task)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.get("", response_model=list[TaskResponse])

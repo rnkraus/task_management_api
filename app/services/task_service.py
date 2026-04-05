@@ -1,13 +1,19 @@
 from sqlalchemy.orm import Session
 from app.models.task import Task as TaskModel
+from app.models.user import User as UserModel
 from app.schemas.task import TaskCreate, TaskPut, TaskUpdate
 
 
 def create_task(db:Session, task_data: TaskCreate) -> TaskModel:
+    user = db.query(UserModel).filter(UserModel.id == task_data.user_id).first()
+    if user is None:
+        raise ValueError("User not found")
+    
     new_task = TaskModel(
         title=task_data.title,
         completed=task_data.completed,
         description=task_data.description,
+        user_id=task_data.user_id,
     )
     db.add(new_task)
     db.commit()
@@ -31,6 +37,7 @@ def update_task(db: Session,task_id: int, task_data: TaskPut) -> TaskModel | Non
         task.title = task_data.title
         task.completed = task_data.completed
         task.description = task_data.description
+        task.user_id=task_data.user_id
 
         db.commit()
         db.refresh(task)
@@ -48,6 +55,8 @@ def patch_task(db: Session, task_id: int, task_data: TaskUpdate) -> TaskModel | 
             task.completed = task_data.completed
         if task_data.description is not None:
             task.description = task_data.description
+        if task_data.user_id is not None:
+            task.user_id = task_data.user_id
 
         db.commit()
         db.refresh(task)

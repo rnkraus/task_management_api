@@ -10,7 +10,7 @@ import os
 from dotenv import load_dotenv
 
 from app.core.db import Base
-from app.models import task
+from app.models import task, user
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env.local", override=True)
