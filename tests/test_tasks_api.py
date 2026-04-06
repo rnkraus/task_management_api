@@ -343,3 +343,121 @@ def test_delete_task_not_found():
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Task not found"}
+
+
+def test_put_user():
+    client.post("/users", json={"email": "test@example.com", "name": "Max"})
+
+    response = client.put(
+        "/users/1",
+        json={"email": "updated@example.com", "name": "Moritz"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": 1,
+        "email": "updated@example.com",
+        "name": "Moritz",
+    }
+
+
+def test_put_user_not_found():
+    response = client.put(
+        "/users/999",
+        json={"email": "updated@example.com", "name": "Moritz"},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "User not found"}
+
+
+def test_put_user_duplicate_email():
+    client.post("/users", json={"email": "a@example.com", "name": "Alice"})
+    client.post("/users", json={"email": "b@example.com", "name": "Bob"})
+
+    response = client.put(
+        "/users/2",
+        json={"email": "a@example.com", "name": "Bob Updated"},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Email already exists"}
+
+
+def test_patch_user_name_only():
+    client.post("/users", json={"email": "test@example.com", "name": "Max"})
+
+    response = client.patch("/users/1", json={"name": "Moritz"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": 1,
+        "email": "test@example.com",
+        "name": "Moritz",
+    }
+
+
+def test_patch_user_email_only():
+    client.post("/users", json={"email": "test@example.com", "name": "Max"})
+
+    response = client.patch("/users/1", json={"email": "new@example.com"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": 1,
+        "email": "new@example.com",
+        "name": "Max",
+    }
+
+
+def test_patch_user_empty_body():
+    client.post("/users", json={"email": "test@example.com", "name": "Max"})
+
+    response = client.patch("/users/1", json={})
+
+    assert response.status_code == 422
+
+
+def test_patch_user_duplicate_email():
+    client.post("/users", json={"email": "a@example.com", "name": "Alice"})
+    client.post("/users", json={"email": "b@example.com", "name": "Bob"})
+
+    response = client.patch("/users/2", json={"email": "a@example.com"})
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Email already exists"}
+
+
+def test_delete_user():
+    client.post("/users", json={"email": "test@example.com", "name": "Max"})
+
+    delete_response = client.delete("/users/1")
+    get_response = client.get("/users")
+
+    assert delete_response.status_code == 200
+    assert delete_response.json() == {
+        "id": 1,
+        "email": "test@example.com",
+        "name": "Max",
+    }
+    assert get_response.json() == []
+
+
+def test_delete_user_not_found():
+    response = client.delete("/users/999")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "User not found"}
+
+
+def test_delete_user_with_existing_tasks():
+    client.post("/users", json={"email": "test@example.com", "name": "Max"})
+    client.post(
+        "/tasks",
+        json={"title": "Task", "description": "Desc", "user_id": 1},
+    )
+
+    response = client.delete("/users/1")
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Cannot delete user with existing tasks"}

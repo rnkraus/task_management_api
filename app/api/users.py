@@ -2,8 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.schemas.user import UserCreate, UserResponse
-from app.services.user_service import create_user, get_users, get_user_by_id
+from app.schemas.user import UserCreate, UserResponse, UserPut, UserUpdate
+from app.services.user_service import (
+    create_user,
+    get_users,
+    get_user_by_id,
+    update_user,
+    patch_user,
+    delete_user,
+)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -27,3 +34,38 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+@router.put("/{user_id}", response_model=UserResponse)
+def update_user_endpoint(user_id: int, user: UserPut, db: Session = Depends(get_db)):
+    try:
+        updated_user = update_user(db, user_id, user)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if updated_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return updated_user
+
+
+@router.patch("/{user_id}", response_model=UserResponse)
+def patch_user_endpoint(user_id: int, user: UserUpdate, db: Session = Depends(get_db)):
+    try:
+        updated_user = patch_user(db, user_id, user)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if updated_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return updated_user
+
+
+@router.delete("/{user_id}", response_model=UserResponse)
+def delete_user_endpoint(user_id: int, db: Session = Depends(get_db)):
+    try:
+        deleted_user = delete_user(db, user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if deleted_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return deleted_user
