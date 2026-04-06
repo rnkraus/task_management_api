@@ -8,7 +8,10 @@ def create_user(db: Session, user_data: UserCreate) -> UserModel:
     if existing:
         raise ValueError("Email already exists")
 
-    user = UserModel(email=user_data.email)
+    user = UserModel(
+        email=user_data.email,
+        name=user_data.name,
+    )
     db.add(user)
     db.commit()
     db.refresh(user)

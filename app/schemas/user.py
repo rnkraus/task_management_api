@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict
 
 class UserCreate(BaseModel):
     email: str
+    name: str
 
 
 class UserResponse(BaseModel):
@@ -10,3 +11,4 @@ class UserResponse(BaseModel):
 
     id: int
     email: str
+    name: str

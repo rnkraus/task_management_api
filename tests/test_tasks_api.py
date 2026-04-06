@@ -21,38 +21,51 @@ def reset_db():
 
 
 def test_create_user():
-    response = client.post("/users", json={"email": "test@example.com"})
+    response = client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
 
     assert response.status_code == 200
     assert response.json() == {
         "id": 1,
         "email": "test@example.com",
+        "name": "Max",
     }
 
 
 def test_create_user_duplicate_email():
-    client.post("/users", json={"email": "test@example.com"})
-    response = client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
+    response = client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Other"},
+    )
 
     assert response.status_code == 400
     assert response.json() == {"detail": "Email already exists"}
 
 
 def test_get_users():
-    client.post("/users", json={"email": "a@example.com"})
-    client.post("/users", json={"email": "b@example.com"})
+    client.post("/users", json={"email": "a@example.com", "name": "Alice"})
+    client.post("/users", json={"email": "b@example.com", "name": "Bob"})
 
     response = client.get("/users")
 
     assert response.status_code == 200
     assert response.json() == [
-        {"id": 1, "email": "a@example.com"},
-        {"id": 2, "email": "b@example.com"},
+        {"id": 1, "email": "a@example.com", "name": "Alice"},
+        {"id": 2, "email": "b@example.com", "name": "Bob"},
     ]
 
 
 def test_get_user_by_id():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
 
     response = client.get("/users/1")
 
@@ -60,6 +73,7 @@ def test_get_user_by_id():
     assert response.json() == {
         "id": 1,
         "email": "test@example.com",
+        "name": "Max",
     }
 
 
@@ -71,7 +85,10 @@ def test_get_user_by_id_not_found():
 
 
 def test_create_task():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
 
     response = client.post(
         "/tasks",
@@ -107,7 +124,10 @@ def test_create_task_with_invalid_user_id():
 
 
 def test_get_all_tasks():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
 
     client.post(
         "/tasks",
@@ -140,7 +160,10 @@ def test_get_all_tasks():
 
 
 def test_get_task_by_id():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
     client.post(
         "/tasks",
         json={"title": "Find me", "description": "Some desc", "user_id": 1},
@@ -166,7 +189,10 @@ def test_get_task_by_id_not_found():
 
 
 def test_create_task_with_empty_title():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
 
     response = client.post(
         "/tasks",
@@ -177,7 +203,10 @@ def test_create_task_with_empty_title():
 
 
 def test_put_task():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
     client.post(
         "/tasks",
         json={"title": "Old title", "description": "Old desc", "user_id": 1},
@@ -204,7 +233,10 @@ def test_put_task():
 
 
 def test_put_task_with_empty_title():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
     client.post(
         "/tasks",
         json={"title": "Old title", "description": "Desc", "user_id": 1},
@@ -224,7 +256,10 @@ def test_put_task_with_empty_title():
 
 
 def test_patch_task_title_only():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
     client.post(
         "/tasks",
         json={"title": "Old", "description": "Old desc", "user_id": 1},
@@ -243,7 +278,10 @@ def test_patch_task_title_only():
 
 
 def test_patch_task_description_only():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
     client.post(
         "/tasks",
         json={"title": "Task", "description": "Old desc", "user_id": 1},
@@ -262,7 +300,10 @@ def test_patch_task_description_only():
 
 
 def test_patch_task_with_empty_body():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
     client.post(
         "/tasks",
         json={"title": "Task", "description": "Desc", "user_id": 1},
@@ -274,7 +315,10 @@ def test_patch_task_with_empty_body():
 
 
 def test_delete_task():
-    client.post("/users", json={"email": "test@example.com"})
+    client.post(
+        "/users",
+        json={"email": "test@example.com", "name": "Max"},
+    )
     client.post(
         "/tasks",
         json={"title": "To delete", "description": "Desc", "user_id": 1},
