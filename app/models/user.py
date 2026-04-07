@@ -9,5 +9,6 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
 
     tasks = relationship("Task", back_populates="user")
