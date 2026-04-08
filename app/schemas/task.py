@@ -6,7 +6,6 @@ class TaskCreate(BaseModel):
     title: str
     completed: bool = False
     description: Optional[str] = None
-    user_id: int
 
     @field_validator("title")
     def title_must_not_be_empty(cls, value):
@@ -20,7 +19,6 @@ class TaskPut(BaseModel):
     title: str
     completed: bool
     description: Optional[str] = None
-    user_id: int
 
     @field_validator("title")
     def title_must_not_be_empty(cls, value):
@@ -34,7 +32,6 @@ class TaskUpdate(BaseModel):
     title: Optional[str] = None
     completed: Optional[bool] = None
     description: Optional[str] = None
-    user_id: Optional[int] = None
 
     @field_validator("title")
     def title_must_not_be_empty(cls, value):
@@ -51,7 +48,6 @@ class TaskUpdate(BaseModel):
             self.title is None 
             and self.completed is None 
             and self.description is None
-            and self.user_id is None
         ):
             raise ValueError("At least one field must be provided")
         return self
