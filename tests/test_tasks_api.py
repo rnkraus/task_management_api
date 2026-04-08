@@ -1,49 +1,14 @@
 from pathlib import Path
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env.test", override=True)
-
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.core.db import Base, engine
 
-client = TestClient(app)
 
-
-@pytest.fixture(autouse=True)
-def reset_db():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-    yield
-
-
-def create_user_and_get_token(email: str, name: str, password: str) -> str:
-    register_response = client.post(
-        "/auth/register",
-        json={
-            "email": email,
-            "name": name,
-            "password": password,
-        },
-    )
-    assert register_response.status_code == 200
-
-    login_response = client.post(
-        "/auth/login",
-        data={
-            "username": email,
-            "password": password,
-        },
-    )
-    assert login_response.status_code == 200
-
-    return login_response.json()["access_token"]
-
-
-def test_create_task_requires_auth():
+def test_create_task_requires_auth(client):
     response = client.post(
         "/tasks",
         json={
@@ -56,8 +21,8 @@ def test_create_task_requires_auth():
     assert response.json() == {"detail": "Not authenticated"}
 
 
-def test_create_task_authenticated():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+def test_create_task_authenticated(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     response = client.post(
         "/tasks",
@@ -78,9 +43,9 @@ def test_create_task_authenticated():
     }
 
 
-def test_get_tasks_only_returns_own_tasks():
-    token_a = create_user_and_get_token("a@example.com", "Alice", "secret123")
-    token_b = create_user_and_get_token("b@example.com", "Bob", "secret123")
+def test_get_tasks_only_returns_own_tasks(client, get_token):
+    token_a = get_token("a@example.com", "Alice", "secret123")
+    token_b = get_token("b@example.com", "Bob", "secret123")
 
     client.post(
         "/tasks",
@@ -110,9 +75,9 @@ def test_get_tasks_only_returns_own_tasks():
     ]
 
 
-def test_get_foreign_task_returns_404():
-    token_a = create_user_and_get_token("a@example.com", "Alice", "secret123")
-    token_b = create_user_and_get_token("b@example.com", "Bob", "secret123")
+def test_get_foreign_task_returns_404(client, get_token):
+    token_a = get_token("a@example.com", "Alice", "secret123")
+    token_b = get_token("b@example.com", "Bob", "secret123")
 
     create_response = client.post(
         "/tasks",
@@ -130,9 +95,9 @@ def test_get_foreign_task_returns_404():
     assert response.json() == {"detail": "Task not found"}
 
 
-def test_update_foreign_task_returns_404():
-    token_a = create_user_and_get_token("a@example.com", "Alice", "secret123")
-    token_b = create_user_and_get_token("b@example.com", "Bob", "secret123")
+def test_update_foreign_task_returns_404(client, get_token):
+    token_a = get_token("a@example.com", "Alice", "secret123")
+    token_b = get_token("b@example.com", "Bob", "secret123")
 
     create_response = client.post(
         "/tasks",
@@ -155,9 +120,9 @@ def test_update_foreign_task_returns_404():
     assert response.json() == {"detail": "Task not found"}
 
 
-def test_delete_foreign_task_returns_404():
-    token_a = create_user_and_get_token("a@example.com", "Alice", "secret123")
-    token_b = create_user_and_get_token("b@example.com", "Bob", "secret123")
+def test_delete_foreign_task_returns_404(client, get_token):
+    token_a = get_token("a@example.com", "Alice", "secret123")
+    token_b = get_token("b@example.com", "Bob", "secret123")
 
     create_response = client.post(
         "/tasks",
@@ -174,8 +139,9 @@ def test_delete_foreign_task_returns_404():
     assert response.status_code == 404
     assert response.json() == {"detail": "Task not found"}
 
-def test_get_own_task_by_id():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+
+def test_get_own_task_by_id(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     create_response = client.post(
         "/tasks",
@@ -199,8 +165,8 @@ def test_get_own_task_by_id():
     }
 
 
-def test_get_task_by_id_not_found():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+def test_get_task_by_id_not_found(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     response = client.get(
         "/tasks/999",
@@ -211,8 +177,8 @@ def test_get_task_by_id_not_found():
     assert response.json() == {"detail": "Task not found"}
 
 
-def test_create_task_with_empty_title():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+def test_create_task_with_empty_title(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     response = client.post(
         "/tasks",
@@ -223,8 +189,8 @@ def test_create_task_with_empty_title():
     assert response.status_code == 422
 
 
-def test_put_own_task():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+def test_put_own_task(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     client.post(
         "/tasks",
@@ -252,8 +218,8 @@ def test_put_own_task():
     }
 
 
-def test_put_task_with_empty_title():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+def test_put_task_with_empty_title(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     client.post(
         "/tasks",
@@ -274,8 +240,8 @@ def test_put_task_with_empty_title():
     assert response.status_code == 422
 
 
-def test_patch_own_task_title_only():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+def test_patch_own_task_title_only(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     client.post(
         "/tasks",
@@ -299,8 +265,8 @@ def test_patch_own_task_title_only():
     }
 
 
-def test_patch_own_task_description_only():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+def test_patch_own_task_description_only(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     client.post(
         "/tasks",
@@ -324,8 +290,8 @@ def test_patch_own_task_description_only():
     }
 
 
-def test_patch_task_with_empty_body():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+def test_patch_task_with_empty_body(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     client.post(
         "/tasks",
@@ -342,8 +308,8 @@ def test_patch_task_with_empty_body():
     assert response.status_code == 422
 
 
-def test_delete_own_task():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+def test_delete_own_task(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     client.post(
         "/tasks",
@@ -372,8 +338,8 @@ def test_delete_own_task():
     assert get_response.json() == []
 
 
-def test_delete_task_not_found():
-    token = create_user_and_get_token("test@example.com", "Max", "secret123")
+def test_delete_task_not_found(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
 
     response = client.delete(
         "/tasks/999",
