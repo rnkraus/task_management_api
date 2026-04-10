@@ -58,13 +58,13 @@ def test_get_tasks_only_returns_own_tasks(client, get_token):
         headers={"Authorization": f"Bearer {token_b}"},
     )
 
-    response_a = client.get(
+    response = client.get(
         "/tasks",
         headers={"Authorization": f"Bearer {token_a}"},
     )
 
-    assert response_a.status_code == 200
-    assert response_a.json() == [
+    assert response.status_code == 200
+    assert response.json() == [
         {
             "id": 1,
             "title": "Alice Task",
@@ -79,15 +79,14 @@ def test_get_foreign_task_returns_404(client, get_token):
     token_a = get_token("a@example.com", "Alice", "secret123")
     token_b = get_token("b@example.com", "Bob", "secret123")
 
-    create_response = client.post(
+    task = client.post(
         "/tasks",
         json={"title": "Alice Task", "description": "A"},
         headers={"Authorization": f"Bearer {token_a}"},
-    )
-    task_id = create_response.json()["id"]
+    ).json()
 
     response = client.get(
-        f"/tasks/{task_id}",
+        f"/tasks/{task['id']}",
         headers={"Authorization": f"Bearer {token_b}"},
     )
 
@@ -99,15 +98,14 @@ def test_update_foreign_task_returns_404(client, get_token):
     token_a = get_token("a@example.com", "Alice", "secret123")
     token_b = get_token("b@example.com", "Bob", "secret123")
 
-    create_response = client.post(
+    task = client.post(
         "/tasks",
         json={"title": "Alice Task", "description": "A"},
         headers={"Authorization": f"Bearer {token_a}"},
-    )
-    task_id = create_response.json()["id"]
+    ).json()
 
     response = client.put(
-        f"/tasks/{task_id}",
+        f"/tasks/{task['id']}",
         json={
             "title": "Hacked",
             "completed": True,
@@ -124,15 +122,14 @@ def test_delete_foreign_task_returns_404(client, get_token):
     token_a = get_token("a@example.com", "Alice", "secret123")
     token_b = get_token("b@example.com", "Bob", "secret123")
 
-    create_response = client.post(
+    task = client.post(
         "/tasks",
         json={"title": "Alice Task", "description": "A"},
         headers={"Authorization": f"Bearer {token_a}"},
-    )
-    task_id = create_response.json()["id"]
+    ).json()
 
     response = client.delete(
-        f"/tasks/{task_id}",
+        f"/tasks/{task['id']}",
         headers={"Authorization": f"Bearer {token_b}"},
     )
 
@@ -143,15 +140,14 @@ def test_delete_foreign_task_returns_404(client, get_token):
 def test_get_own_task_by_id(client, get_token):
     token = get_token("test@example.com", "Max", "secret123")
 
-    create_response = client.post(
+    task = client.post(
         "/tasks",
         json={"title": "Find me", "description": "Some desc"},
         headers={"Authorization": f"Bearer {token}"},
-    )
-    task_id = create_response.json()["id"]
+    ).json()
 
     response = client.get(
-        f"/tasks/{task_id}",
+        f"/tasks/{task['id']}",
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -162,6 +158,11 @@ def test_get_own_task_by_id(client, get_token):
         "completed": False,
         "description": "Some desc",
         "user_id": 1,
+        "user": {
+            "id": 1,
+            "email": "test@example.com",
+            "name": "Max",
+        },
     }
 
 

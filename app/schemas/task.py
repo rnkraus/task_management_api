@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, field_validator, model_validator, ConfigDict
-
+from app.schemas.user import UserResponse
 
 class TaskCreate(BaseModel):
     title: str
@@ -54,10 +54,11 @@ class TaskUpdate(BaseModel):
 
 
 class TaskResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    
     id: int
     title: str
     completed: bool
     description: Optional[str] = None
     user_id: int
+
+class TaskDetailResponse(TaskResponse):
+    user: UserResponse
