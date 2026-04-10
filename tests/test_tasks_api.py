@@ -349,3 +349,95 @@ def test_delete_task_not_found(client, get_token):
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Task not found"}
+
+
+def test_get_tasks_filter_by_completed(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
+
+    client.post(
+        "/tasks",
+        json={"title": "Open task", "description": "A"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    client.post(
+        "/tasks",
+        json={"title": "Done task", "description": "B"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    client.patch(
+        "/tasks/2",
+        json={"completed": True},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    response = client.get(
+        "/tasks?completed=true",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": 2,
+            "title": "Done task",
+            "completed": True,
+            "description": "B",
+            "user_id": 1,
+        }
+    ]
+
+
+def test_get_tasks_with_limit_and_offset(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
+
+    client.post(
+        "/tasks",
+        json={"title": "Task 1", "description": "A"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    client.post(
+        "/tasks",
+        json={"title": "Task 2", "description": "B"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    client.post(
+        "/tasks",
+        json={"title": "Task 3", "description": "C"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    response = client.get(
+        "/tasks?limit=2&offset=1",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": 2,
+            "title": "Task 2",
+            "completed": False,
+            "description": "B",
+            "user_id": 1,
+        },
+        {
+            "id": 3,
+            "title": "Task 3",
+            "completed": False,
+            "description": "C",
+            "user_id": 1,
+        },
+    ]
+
+
+def test_get_tasks_invalid_pagination_params(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
+
+    response = client.get(
+        "/tasks?limit=0&offset=-1",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 422

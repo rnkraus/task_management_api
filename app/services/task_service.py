@@ -15,9 +15,19 @@ def create_task(db: Session, task_data: TaskCreate, user_id: int) -> TaskModel:
     db.refresh(new_task)
     return new_task
 
+def get_all_tasks(
+    db: Session,
+    user_id: int,
+    completed: bool | None = None,
+    limit: int = 10,
+    offset: int = 0,
+) -> list[TaskModel]:
+    query = db.query(TaskModel).filter(TaskModel.user_id == user_id)
 
-def get_all_tasks(db: Session, user_id: int) -> list[TaskModel]:
-    return db.query(TaskModel).filter(TaskModel.user_id == user_id).all()
+    if completed is not None:
+        query = query.filter(TaskModel.completed == completed)
+
+    return query.offset(offset).limit(limit).all()
 
 
 def get_task_by_id(db: Session, task_id: int, user_id: int) -> TaskModel | None:
