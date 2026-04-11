@@ -162,6 +162,7 @@ def test_get_own_task_by_id(client, get_token):
             "id": 1,
             "email": "test@example.com",
             "name": "Max",
+            "role": "user", 
         },
     }
 
@@ -441,3 +442,216 @@ def test_get_tasks_invalid_pagination_params(client, get_token):
     )
 
     assert response.status_code == 422
+
+
+
+
+def test_get_tasks_sorted_by_id_desc(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
+
+    client.post(
+        "/tasks",
+        json={"title": "Task 1", "description": "A"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    client.post(
+        "/tasks",
+        json={"title": "Task 2", "description": "B"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    client.post(
+        "/tasks",
+        json={"title": "Task 3", "description": "C"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    response = client.get(
+        "/tasks?sort_by=id&order=desc",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": 3,
+            "title": "Task 3",
+            "completed": False,
+            "description": "C",
+            "user_id": 1,
+        },
+        {
+            "id": 2,
+            "title": "Task 2",
+            "completed": False,
+            "description": "B",
+            "user_id": 1,
+        },
+        {
+            "id": 1,
+            "title": "Task 1",
+            "completed": False,
+            "description": "A",
+            "user_id": 1,
+        },
+    ]
+
+
+def test_get_tasks_sorted_by_title_asc(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
+
+    client.post(
+        "/tasks",
+        json={"title": "Bravo", "description": "B"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    client.post(
+        "/tasks",
+        json={"title": "Alpha", "description": "A"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    response = client.get(
+        "/tasks?sort_by=title&order=asc",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": 2,
+            "title": "Alpha",
+            "completed": False,
+            "description": "A",
+            "user_id": 1,
+        },
+        {
+            "id": 1,
+            "title": "Bravo",
+            "completed": False,
+            "description": "B",
+            "user_id": 1,
+        },
+    ]
+
+
+def test_get_tasks_invalid_sort_by(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
+
+    response = client.get(
+        "/tasks?sort_by=unknown",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 422
+
+
+def test_get_tasks_search_by_title(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
+
+    client.post(
+        "/tasks",
+        json={"title": "Fix login bug", "description": "Backend auth"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    client.post(
+        "/tasks",
+        json={"title": "Write tests", "description": "Pytest coverage"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    response = client.get(
+        "/tasks?search=login",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": 1,
+            "title": "Fix login bug",
+            "completed": False,
+            "description": "Backend auth",
+            "user_id": 1,
+        }
+    ]
+
+
+def test_get_tasks_search_by_description(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
+
+    client.post(
+        "/tasks",
+        json={"title": "Task A", "description": "API integration"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    client.post(
+        "/tasks",
+        json={"title": "Task B", "description": "Database migration"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    response = client.get(
+        "/tasks?search=database",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": 2,
+            "title": "Task B",
+            "completed": False,
+            "description": "Database migration",
+            "user_id": 1,
+        }
+    ]
+
+
+def test_get_tasks_search_returns_empty_list(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
+
+    client.post(
+        "/tasks",
+        json={"title": "Write docs", "description": "README update"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    response = client.get(
+        "/tasks?search=frontend",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_get_tasks_search_only_own_tasks(client, get_token):
+    token_a = get_token("a@example.com", "Alice", "secret123")
+    token_b = get_token("b@example.com", "Bob", "secret123")
+
+    client.post(
+        "/tasks",
+        json={"title": "Fix login bug", "description": "Alice task"},
+        headers={"Authorization": f"Bearer {token_a}"},
+    )
+    client.post(
+        "/tasks",
+        json={"title": "Fix login bug", "description": "Bob task"},
+        headers={"Authorization": f"Bearer {token_b}"},
+    )
+
+    response = client.get(
+        "/tasks?search=login",
+        headers={"Authorization": f"Bearer {token_a}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": 1,
+            "title": "Fix login bug",
+            "completed": False,
+            "description": "Alice task",
+            "user_id": 1,
+        }
+    ]
