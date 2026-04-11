@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.core.security import get_current_admin, get_current_user
+from app.core.security import require_admin, get_current_user
 from app.models.user import User
 from app.schemas.user import UserPut, UserUpdate, UserResponse
 from app.services.user_service import (
@@ -72,7 +72,7 @@ def delete_me(
 @router.get("", response_model=list[UserResponse])
 def read_users(
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_admin),
 ):
     return get_users(db)
 
@@ -81,7 +81,7 @@ def read_users(
 def read_user_by_admin(
     user_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_admin),
 ):
     user = get_user_by_id(db, user_id)
     if user is None:
@@ -94,7 +94,7 @@ def update_user_by_admin(
     user_id: int,
     user: UserPut,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_admin),
 ):
     try:
         updated_user = update_user(db, user_id, user)
@@ -111,7 +111,7 @@ def patch_user_by_admin(
     user_id: int,
     user: UserUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_admin),
 ):
     try:
         updated_user = patch_user(db, user_id, user)
@@ -127,7 +127,7 @@ def patch_user_by_admin(
 def delete_user_by_admin(
     user_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_admin),
 ):
     try:
         deleted_user = delete_user(db, user_id)
