@@ -1,3 +1,4 @@
+from typing import Literal
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -32,6 +33,8 @@ def read_tasks(
     completed: bool | None = None,
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    sort_by: Literal["id", "title", "completed"] = "id",
+    order: Literal["asc", "desc"] = "asc",
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -41,6 +44,8 @@ def read_tasks(
         completed=completed,
         limit=limit,
         offset=offset,
+        sort_by=sort_by,
+        order=order,
     )
 
 

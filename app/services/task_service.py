@@ -1,3 +1,4 @@
+from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 from app.models.task import Task as TaskModel
 from app.schemas.task import TaskCreate, TaskPut, TaskUpdate
@@ -21,11 +22,20 @@ def get_all_tasks(
     completed: bool | None = None,
     limit: int = 10,
     offset: int = 0,
+    sort_by: str = "id",
+    order: str = "asc",
 ) -> list[TaskModel]:
     query = db.query(TaskModel).filter(TaskModel.user_id == user_id)
 
     if completed is not None:
         query = query.filter(TaskModel.completed == completed)
+
+    sort_column = getattr(TaskModel, sort_by)
+
+    if order == "desc":
+        query = query.order_by(desc(sort_column))
+    else:
+        query = query.order_by(asc(sort_column))
 
     return query.offset(offset).limit(limit).all()
 
