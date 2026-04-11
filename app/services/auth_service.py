@@ -12,6 +12,7 @@ def register_user(db: Session, email: str, name: str, password: str) -> User:
         email=email,
         name=name,
         hashed_password=hash_password(password),
+        role="user",
     )
     db.add(user)
     db.commit()

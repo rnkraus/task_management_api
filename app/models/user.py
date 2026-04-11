@@ -10,5 +10,6 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
+    role = Column(String, nullable=False, default="user")
 
     tasks = relationship("Task", back_populates="user")
