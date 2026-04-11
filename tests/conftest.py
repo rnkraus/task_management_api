@@ -10,6 +10,9 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.core.db import Base, engine
 
+from app.core.db import SessionLocal
+from app.models.user import User
+
 
 @pytest.fixture
 def client():
@@ -48,3 +51,17 @@ def get_token(client):
         return login_response.json()["access_token"]
 
     return _get_token
+
+
+@pytest.fixture
+def make_admin():
+    def _make_admin(email: str):
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == email).first()
+            user.role = "admin"
+            db.commit()
+        finally:
+            db.close()
+
+    return _make_admin

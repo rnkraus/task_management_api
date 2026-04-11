@@ -136,6 +136,7 @@ def test_read_me():
         "id": 1,
         "email": "test@example.com",
         "name": "Max",
+        "role": "user",
     }
 
 
