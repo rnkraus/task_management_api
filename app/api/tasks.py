@@ -31,6 +31,7 @@ def create_task_endpoint(
 @router.get("", response_model=list[TaskResponse])
 def read_tasks(
     completed: bool | None = None,
+    search: str | None = None,
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
     sort_by: Literal["id", "title", "completed"] = "id",
@@ -42,6 +43,7 @@ def read_tasks(
         db=db,
         user_id=current_user.id,
         completed=completed,
+        search=search,
         limit=limit,
         offset=offset,
         sort_by=sort_by,

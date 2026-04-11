@@ -1,4 +1,4 @@
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, or_
 from sqlalchemy.orm import Session
 from app.models.task import Task as TaskModel
 from app.schemas.task import TaskCreate, TaskPut, TaskUpdate
@@ -20,6 +20,7 @@ def get_all_tasks(
     db: Session,
     user_id: int,
     completed: bool | None = None,
+    search: str | None = None,
     limit: int = 10,
     offset: int = 0,
     sort_by: str = "id",
@@ -29,6 +30,15 @@ def get_all_tasks(
 
     if completed is not None:
         query = query.filter(TaskModel.completed == completed)
+
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                TaskModel.title.ilike(search_term),
+                TaskModel.description.ilike(search_term),
+            )
+        )
 
     sort_column = getattr(TaskModel, sort_by)
 
