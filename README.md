@@ -1,19 +1,34 @@
 # Task Management API
 
-RESTful API for managing tasks with user assignment.
+RESTful API for managing tasks with authentication, role-based access control, and advanced querying.
 
 Built with FastAPI, PostgreSQL, and SQLAlchemy.
-Goal: A practical backend project with clean architecture.
+Goal: A production-like backend project with clean architecture and real-world features.
 
 ---
 
 ## Features
 
 - RESTful API design
-- Full CRUD for Users and Tasks
+- JWT authentication
+- Role-based access control
+- Full CRUD for tasks
+- User self-service endpoints
+- Admin user management endpoints
+- Filtering, pagination, sorting, and search
+- PostgreSQL + SQLAlchemy + Alembic
+- Tests with pytest
+- Docker-based setup
 
 ### Users
-- `POST /users`
+
+#### Self (Authenticated User)
+- `GET /users/me`
+- `PUT /users/me`
+- `PATCH /users/me`
+- `DELETE /users/me`
+
+#### Admin Only
 - `GET /users`
 - `GET /users/{id}`
 - `PUT /users/{id}`
@@ -28,11 +43,17 @@ Goal: A practical backend project with clean architecture.
 - `PATCH /tasks/{id}`
 - `DELETE /tasks/{id}`
 
+### Advanced Querying
+- Filtering (`completed=true/false`)
+- Pagination (`limit`, `offset`)
+- Sorting (`sort_by`, `order`)
+- Search (`search` in title/description)
+
 ### Additional Features
 - Task ↔ User Relation (Foreign Key)
 - Validation with Pydantic
-- Error Handling (400 / 404 / 422)
-- PostgreSQL as the database
+- Error Handling (400 / 401 / 403 / 404 / 422)
+- PostgreSQL database
 - SQLAlchemy ORM
 - Alembic Migrations
 - Tests with pytest
@@ -71,13 +92,25 @@ pip install -r requirements-dev.txt
 
 ### 3. Create Environment Files
 
-#### .env (for Docker):
+Generate a secure key for JWT authentication:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+Create the following three `.env` files and replace the placeholder values with your own:
+
+- choose a secure password for the database
+- generate a secure `SECRET_KEY`
+
+#### .env (PostgreSQL in Docker + JWT authentication)
 
 ```env
 POSTGRES_DB=taskdb
 POSTGRES_USER=taskuser
 POSTGRES_PASSWORD=your_password_here
 DATABASE_URL=postgresql://taskuser:your_password_here@db:5432/taskdb
+
+SECRET_KEY=your_secret_key_here
 ```
 
 #### .env.local (for local tools like Alembic):
@@ -106,6 +139,49 @@ alembic upgrade head
 
 ---
 
+## Authentication
+
+### Register
+
+    `POST /auth/register`
+
+### Login
+
+    `POST /auth/login`
+
+### Using the Access Token
+
+After login, include the token in the request header:
+
+    Authorization: Bearer <access_token>
+
+Required for all protected endpoints (e.g. `/tasks`, `/users/me`)
+
+In Swagger UI, you can use the "Authorize" button to log in and automatically include the token.
+
+---
+
+## API Docs (Swagger)
+
+After starting the server, open:
+
+    http://localhost:8000/docs
+
+Swagger UI provides interactive API documentation.
+
+Steps:
+1. Register a user (`/auth/register`)
+2. Click "Authorize" and log in
+3. Use protected endpoints (e.g. `/tasks`)
+
+## Admin
+
+Promote a user to admin:
+
+    python -m scripts.make_admin user@example.com
+
+---
+
 ## Tests
 
 ```bash
@@ -116,12 +192,18 @@ pytest
 
 ## Architecture
 
-- `api/` → HTTP Layer (FastAPI endpoints)
-- `services/` → Business logic
-- `models/` → Database models (SQLAlchemy)
-- `schemas/` → Request/Response models (Pydantic)
-- `core/` → Configuration & DB setup
-
+```
+project/
+├── app/
+│ ├── api/ # HTTP layer (FastAPI endpoints)
+│ ├── services/ # Business logic
+│ ├── models/ # Database models (SQLAlchemy)
+│ ├── schemas/ # Request/Response models (Pydantic)
+│ └── core/ # Config, security, database setup
+│
+├── scripts/ # Utility scripts (e.g. make_admin)
+├── tests/ # Test suite
+```
 ---
 
 ## Database
@@ -135,11 +217,12 @@ pytest
 
 ## Behavior
 
+- Users can only access their own tasks
+- Admins can manage all users
 - Users cannot be deleted if tasks exist
 - Duplicate email addresses are prevented
-- Tasks require a valid `user_id`
-- PATCH requests must include at least one field
 - Task titles cannot be empty
+- PATCH requests must include at least one field
 - PUT replaces an object completely, PATCH performs a partial update
 
 ---
