@@ -34,7 +34,7 @@ def read_tasks(
     search: str | None = None,
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    sort_by: Literal["id", "title", "completed"] = "id",
+    sort_by: Literal["id", "title", "completed", "created_at", "updated_at"] = "id",
     order: Literal["asc", "desc"] = "asc",
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),

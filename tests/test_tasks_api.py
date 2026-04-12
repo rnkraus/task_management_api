@@ -748,3 +748,21 @@ def test_get_tasks_search_only_own_tasks(client, get_token):
         description="Alice task",
         user_id=1,
     )
+
+
+def test_get_tasks_sorted_by_created_at_desc(client, get_token):
+    token = get_token("test@example.com", "Max", "secret123")
+
+    client.post("/tasks", json={"title": "Task 1"}, headers={"Authorization": f"Bearer {token}"})
+    client.post("/tasks", json={"title": "Task 2"}, headers={"Authorization": f"Bearer {token}"})
+
+    response = client.get(
+        "/tasks?sort_by=created_at&order=desc",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body[0]["id"] == 2
+    assert body[1]["id"] == 1
