@@ -1,13 +1,12 @@
-from dotenv import load_dotenv
-import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-SECRET_KEY = os.getenv("SECRET_KEY")
+class Settings(BaseSettings):
+    database_url: str
+    secret_key: str
+    access_token_expire_minutes: int = 60
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL is not set")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-if not SECRET_KEY:
-    raise ValueError("SECRET_KEY is not set")
+
+settings = Settings()
