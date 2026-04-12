@@ -100,7 +100,7 @@ python -c "import secrets; print(secrets.token_hex(32))"
 Create the following three `.env` files and replace the placeholder values with your own:
 
 - choose a secure password for the database
-- generate a secure `SECRET_KEY`
+- insert your generated `SECRET_KEY`
 
 #### .env (PostgreSQL in Docker + JWT authentication)
 

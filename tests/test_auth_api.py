@@ -20,6 +20,22 @@ def reset_db():
     yield
 
 
+def assert_user_response(
+    body: dict,
+    *,
+    user_id: int,
+    email: str,
+    name: str,
+    role: str,
+):
+    assert body["id"] == user_id
+    assert body["email"] == email
+    assert body["name"] == name
+    assert body["role"] == role
+    assert "created_at" in body
+    assert "updated_at" in body
+
+
 def test_register_user():
     response = client.post(
         "/auth/register",
@@ -31,11 +47,15 @@ def test_register_user():
     )
 
     assert response.status_code == 200
-    assert response.json() == {
-        "id": 1,
-        "email": "test@example.com",
-        "name": "Max",
-    }
+    body = response.json()
+
+    assert_user_response(
+        body,
+        user_id=1,
+        email="test@example.com",
+        name="Max",
+        role="user",
+    )
 
 
 def test_register_user_duplicate_email():
@@ -81,6 +101,7 @@ def test_login_success():
 
     assert response.status_code == 200
     body = response.json()
+
     assert "access_token" in body
     assert body["token_type"] == "bearer"
 
@@ -132,12 +153,15 @@ def test_read_me():
     )
 
     assert response.status_code == 200
-    assert response.json() == {
-        "id": 1,
-        "email": "test@example.com",
-        "name": "Max",
-        "role": "user",
-    }
+    body = response.json()
+
+    assert_user_response(
+        body,
+        user_id=1,
+        email="test@example.com",
+        name="Max",
+        role="user",
+    )
 
 
 def test_read_me_without_token():

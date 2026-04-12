@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, field_validator, model_validator, ConfigDict
 
@@ -27,3 +28,5 @@ class UserResponse(BaseModel):
     email: str
     name: str
     role: str
+    created_at: datetime
+    updated_at: datetime

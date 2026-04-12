@@ -17,7 +17,7 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    return {"id": user.id, "email": user.email, "name": user.name}
+    return user
 
 
 @router.post("/login", response_model=Token)

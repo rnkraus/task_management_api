@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, field_validator, model_validator, ConfigDict
 from app.schemas.user import UserResponse
@@ -59,6 +60,8 @@ class TaskResponse(BaseModel):
     completed: bool
     description: Optional[str] = None
     user_id: int
+    created_at: datetime
+    updated_at: datetime
 
 class TaskDetailResponse(TaskResponse):
     user: UserResponse
