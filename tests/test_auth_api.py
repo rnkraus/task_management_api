@@ -1,14 +1,13 @@
-from pathlib import Path
-from dotenv import load_dotenv
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env.test", override=True)
-
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.core.db import Base, engine
+from pathlib import Path
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env.test", override=True)
 
 client = TestClient(app)
 

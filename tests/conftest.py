@@ -4,14 +4,14 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env.test", override=True)
 
-import pytest
-from fastapi.testclient import TestClient
+import pytest # noqa: E402
+from fastapi.testclient import TestClient # noqa: E402
 
-from app.main import app
-from app.core.db import Base, engine
+from app.main import app # noqa: E402
+from app.core.db import Base, engine # noqa: E402
 
-from app.core.db import SessionLocal
-from app.models.user import User
+from app.core.db import SessionLocal # noqa: E402
+from app.models.user import User # noqa: E402
 
 
 @pytest.fixture

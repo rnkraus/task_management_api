@@ -4,9 +4,9 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env.local", override=True)
 
-from app.core.db import SessionLocal
-from app.models.user import User
-from app.models.task import Task
+from app.core.db import SessionLocal  # noqa: E402
+from app.models.user import User  # noqa: E402
+from app.models.task import Task  # noqa: E402, F401
 
 
 def make_admin(email: str):

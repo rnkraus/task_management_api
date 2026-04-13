@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, field_validator, model_validator, ConfigDict
+from pydantic import BaseModel, model_validator, ConfigDict
 
 
 class UserCreate(BaseModel):

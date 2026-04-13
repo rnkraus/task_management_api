@@ -69,7 +69,7 @@ def delete_me(
     return deleted_user
 
 
-@router.get("", response_model=list[UserResponse])
+@router.get("", response_model=list[UserResponse], summary="Read All Users By Admin")
 def read_users(
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
