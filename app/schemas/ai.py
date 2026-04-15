@@ -9,3 +9,17 @@ class TaskImproveRequest(BaseModel):
 class TaskImproveResponse(BaseModel):
     suggested_title: str
     suggested_description: str | None = None
+
+
+class GroupedTaskItem(BaseModel):
+    id: int
+    title: str
+
+
+class TaskGroup(BaseModel):
+    group_name: str
+    tasks: list[GroupedTaskItem]
+
+
+class GroupTasksResponse(BaseModel):
+    groups: list[TaskGroup]

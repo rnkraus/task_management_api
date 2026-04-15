@@ -47,3 +47,48 @@ Description: {description}
             "suggested_title": title,
             "suggested_description": description,
         }
+    
+
+def group_tasks(tasks: list[dict]):
+    prompt = f"""
+You help organize tasks in a task management app.
+
+Group the following tasks into clear, meaningful real-life categories.
+
+Guidelines:
+- Group tasks by topic or area of life (e.g. Work, Personal, Finance, Health, Household, Development)
+- Use short, specific group names
+- Avoid vague categories unless necessary
+- Only use a fallback group named "Other" if a task truly does not fit any meaningful category
+- Every task must be assigned to exactly one group
+- Do not invent new tasks
+- Keep tasks unchanged
+
+Return ONLY valid JSON in this format:
+{{
+  "groups": [
+    {{
+      "group_name": "...",
+      "tasks": [
+        {{"id": 1, "title": "..."}}
+      ]
+    }}
+  ]
+}}
+
+Tasks:
+{json.dumps(tasks, ensure_ascii=False)}
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    content = response.choices[0].message.content.strip()
+
+    try:
+        data = json.loads(content)
+        return {"groups": data.get("groups", [])}
+    except Exception:
+        return {"groups": []}
