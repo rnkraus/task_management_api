@@ -2,10 +2,14 @@ from openai import OpenAI
 from app.core.config import settings
 import json
 
-client = OpenAI(api_key=settings.openai_api_key)
-
+def get_openai_client():
+    if not settings.openai_api_key:
+        raise RuntimeError("OpenAI API key not configured")
+    return OpenAI(api_key=settings.openai_api_key)
 
 def improve_task(title: str, description: str | None):
+    client = get_openai_client()
+
     prompt = f"""
 You are a backend assistant that improves task descriptions for a task management app.
 
@@ -47,9 +51,11 @@ Description: {description}
             "suggested_title": title,
             "suggested_description": description,
         }
-    
+
 
 def group_tasks(tasks: list[dict]):
+    client = get_openai_client()
+
     prompt = f"""
 You help organize tasks in a task management app.
 

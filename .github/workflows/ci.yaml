@@ -26,6 +26,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://taskuser:change_me@localhost:5432/taskdb_test
       SECRET_KEY: test_secret_key
+      OPENAI_API_KEY: test_openai_api_key
 
     steps:
       - name: Checkout
