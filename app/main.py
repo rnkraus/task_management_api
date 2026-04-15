@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.api.tasks import router as task_router
 from app.api.users import router as user_router
 from app.api.auth import router as auth_router
+from app.api.ai import router as ai_router
 from app.core.db import get_db
 
 
@@ -32,3 +33,4 @@ def health_db(db: Session = Depends(get_db)):
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(task_router)
+app.include_router(ai_router)
