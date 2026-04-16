@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
@@ -11,7 +11,7 @@ from app.schemas.ai import (
     TaskPlanResponse,
 )
 from app.services.ai_service import create_task_plan, group_tasks, improve_task
-from app.services.task_service import get_all_tasks
+from app.services.task_service import get_all_tasks, get_task_by_id
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 
@@ -20,6 +20,19 @@ router = APIRouter(prefix="/ai", tags=["AI"])
 def improve_task_endpoint(data: TaskImproveRequest):
     result = improve_task(data.title, data.description)
     return result
+
+
+@router.post("/tasks/{task_id}/improve", response_model=TaskImproveResponse)
+def improve_existing_task_endpoint(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    task = get_task_by_id(db, task_id, current_user.id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    return improve_task(task.title, task.description)
 
 
 @router.get("/group-tasks", response_model=GroupTasksResponse)
