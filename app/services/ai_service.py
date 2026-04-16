@@ -69,6 +69,7 @@ Guidelines:
 - Every task must be assigned to exactly one group
 - Do not invent new tasks
 - Keep tasks unchanged
+- Do not wrap the JSON in markdown or code blocks.
 
 Return ONLY valid JSON in this format:
 {{
@@ -89,6 +90,7 @@ Tasks:
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
+        response_format={"type": "json_object"},
     )
 
     content = response.choices[0].message.content.strip()
@@ -96,7 +98,9 @@ Tasks:
     try:
         data = json.loads(content)
         return {"groups": data.get("groups", [])}
-    except Exception:
+    except Exception as e:
+        print("GROUP PARSE ERROR:", e)
+        print("RAW:", content)
         return {"groups": []}
     
 
@@ -116,6 +120,7 @@ Guidelines:
 - Every task must appear exactly once
 - Give a short reason for the order of each task
 - Do not include any text outside JSON
+- Do not wrap the JSON in markdown or code blocks.
 
 Return ONLY valid JSON in this format:
 {{
@@ -135,6 +140,7 @@ Tasks:
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
+        response_format={"type": "json_object"},
     )
 
     content = response.choices[0].message.content.strip()
@@ -142,5 +148,7 @@ Tasks:
     try:
         data = json.loads(content)
         return {"steps": data.get("steps", [])}
-    except Exception:
+    except Exception as e:
+        print("PARSE ERROR:", e)
+        print("RAW:", content)
         return {"steps": []}
