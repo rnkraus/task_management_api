@@ -49,7 +49,7 @@ def group_tasks_endpoint(
         order="asc",
     )
 
-    task_data = [{"id": task.id, "title": task.title} for task in tasks]
+    task_data = [{"id": task.id, "title": task.title} for task in tasks if task.title and len(task.title) > 3]
 
     return group_tasks(task_data)
 

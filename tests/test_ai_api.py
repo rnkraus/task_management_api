@@ -192,3 +192,44 @@ def test_plan_returns_ordered_steps(client, get_token, monkeypatch):
             },
         ]
     }
+    
+
+def test_group_tasks_requires_auth(client):
+    response = client.get("/ai/group-tasks")
+
+    assert response.status_code == 401
+
+
+def test_plan_with_no_tasks_returns_empty(client, get_token, monkeypatch):
+    token = get_token("user@example.com", "User", "secret123")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    def fake_plan(tasks):
+        assert tasks == []
+        return {"steps": []}
+
+    monkeypatch.setattr("app.api.ai.create_task_plan", fake_plan)
+
+    response = client.get("/ai/plan", headers=headers)
+
+    assert response.status_code == 200
+    assert response.json() == {"steps": []}
+
+
+def test_group_tasks_filters_invalid_titles(client, get_token, monkeypatch):
+    token = get_token("user@example.com", "User", "secret123")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    client.post("/tasks", json={"title": "ok task"}, headers=headers)
+    client.post("/tasks", json={"title": "a"}, headers=headers)
+    client.post("/tasks", json={"title": ""}, headers=headers)
+
+    def fake_group(tasks):
+        assert tasks == [{"id": 1, "title": "ok task"}]
+        return {"groups": []}
+
+    monkeypatch.setattr("app.api.ai.group_tasks", fake_group)
+
+    response = client.get("/ai/group-tasks", headers=headers)
+
+    assert response.status_code == 200
