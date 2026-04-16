@@ -98,3 +98,49 @@ Tasks:
         return {"groups": data.get("groups", [])}
     except Exception:
         return {"groups": []}
+    
+
+def create_task_plan(tasks: list[dict]):
+    client = get_openai_client()
+
+    prompt = f"""
+You help organize and prioritize tasks in a task management app.
+
+Create a logical execution plan for the following tasks.
+
+Guidelines:
+- Order tasks by priority and logical dependencies
+- Put urgent or blocking tasks earlier
+- Keep tasks close to their original meaning
+- Do not invent new tasks
+- Every task must appear exactly once
+- Give a short reason for the order of each task
+- Do not include any text outside JSON
+
+Return ONLY valid JSON in this format:
+{{
+  "steps": [
+    {{
+      "id": 1,
+      "title": "...",
+      "reason": "..."
+    }}
+  ]
+}}
+
+Tasks:
+{json.dumps(tasks, ensure_ascii=False)}
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    content = response.choices[0].message.content.strip()
+
+    try:
+        data = json.loads(content)
+        return {"steps": data.get("steps", [])}
+    except Exception:
+        return {"steps": []}

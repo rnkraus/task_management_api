@@ -8,8 +8,9 @@ from app.schemas.ai import (
     GroupTasksResponse,
     TaskImproveRequest,
     TaskImproveResponse,
+    TaskPlanResponse,
 )
-from app.services.ai_service import group_tasks, improve_task
+from app.services.ai_service import create_task_plan, group_tasks, improve_task
 from app.services.task_service import get_all_tasks
 
 router = APIRouter(prefix="/ai", tags=["AI"])
@@ -38,3 +39,22 @@ def group_tasks_endpoint(
     task_data = [{"id": task.id, "title": task.title} for task in tasks]
 
     return group_tasks(task_data)
+
+
+@router.get("/plan", response_model=TaskPlanResponse)
+def create_task_plan_endpoint(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    tasks = get_all_tasks(
+        db=db,
+        user_id=current_user.id,
+        limit=100,
+        offset=0,
+        sort_by="id",
+        order="asc",
+    )
+
+    task_data = [{"id": task.id, "title": task.title} for task in tasks]
+
+    return create_task_plan(task_data)

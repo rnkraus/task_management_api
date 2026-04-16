@@ -23,3 +23,13 @@ class TaskGroup(BaseModel):
 
 class GroupTasksResponse(BaseModel):
     groups: list[TaskGroup]
+
+
+class PlannedTaskStep(BaseModel):
+    id: int
+    title: str
+    reason: str
+
+
+class TaskPlanResponse(BaseModel):
+    steps: list[PlannedTaskStep]
