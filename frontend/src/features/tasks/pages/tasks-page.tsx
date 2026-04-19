@@ -1,28 +1,87 @@
-import { useQuery } from "@tanstack/react-query";
-import { getTasks } from "../api";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createTask, getTasks } from "../api";
 
 export default function TasksPage() {
-  const { data, isLoading, isError } = useQuery({
+  const queryClient = useQueryClient();
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const tasksQuery = useQuery({
     queryKey: ["tasks"],
     queryFn: getTasks,
   });
 
-  if (isLoading) {
-    return <div>Tasks werden geladen...</div>;
+  const createTaskMutation = useMutation({
+    mutationFn: createTask,
+    onSuccess: async (createdTask) => {
+      console.log("Task created successfully:", createdTask);
+
+      setTitle("");
+      setDescription("");
+      setErrorMessage("");
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (error) => {
+      console.error("Create task error:", error);
+      setErrorMessage("Failed to create task");
+    },
+  });
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setErrorMessage("");
+
+    createTaskMutation.mutate({
+      title,
+      description,
+    });
   }
 
-  if (isError) {
-    return <div>Fehler beim Laden der Tasks.</div>;
+  if (tasksQuery.isLoading) {
+    return <div>Loading tasks...</div>;
+  }
+
+  if (tasksQuery.isError) {
+    return <div>Failed to load tasks.</div>;
   }
 
   return (
     <div>
-      <h1>Meine Tasks</h1>
+      <h1>My Tasks</h1>
 
-      {data && data.length === 0 && <p>Keine Tasks vorhanden.</p>}
+      <form onSubmit={handleSubmit}>
+        <div>
+          <input
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <textarea
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+
+        <button type="submit" disabled={createTaskMutation.isPending}>
+          {createTaskMutation.isPending ? "Saving..." : "Create Task"}
+        </button>
+      </form>
+
+      {errorMessage && <p>{errorMessage}</p>}
+
+      {tasksQuery.data && tasksQuery.data.length === 0 && (
+        <p>No tasks available.</p>
+      )}
 
       <ul>
-        {data?.map((task) => (
+        {tasksQuery.data?.map((task) => (
           <li key={task.id}>
             <strong>{task.title}</strong>
             {task.description && <span> - {task.description}</span>}
