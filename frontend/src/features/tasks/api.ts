@@ -22,3 +22,14 @@ export async function createTask(payload: CreateTaskInput): Promise<Task> {
 
   return res.data;
 }
+
+export async function updateTaskCompleted(
+  taskId: number,
+  completed: boolean
+) {
+  const res = await api.patch(`/tasks/${taskId}`, {
+    completed,
+  });
+
+  return res.data;
+}

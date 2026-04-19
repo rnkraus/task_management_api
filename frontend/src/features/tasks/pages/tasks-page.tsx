@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createTask, getTasks } from "../api";
+import { updateTaskCompleted } from "../api";
 
 export default function TasksPage() {
   const queryClient = useQueryClient();
@@ -29,6 +30,19 @@ export default function TasksPage() {
       setErrorMessage("Failed to create task");
     },
   });
+
+  const toggleTaskMutation = useMutation({
+  mutationFn: ({ id, completed }: { id: number; completed: boolean }) =>
+    updateTaskCompleted(id, completed),
+
+  onSuccess: async () => {
+    await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  },
+
+  onError: (error) => {
+    console.error("Toggle task error:", error);
+  },
+});
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,7 +97,27 @@ export default function TasksPage() {
       <ul>
         {tasksQuery.data?.map((task) => (
           <li key={task.id}>
-            <strong>{task.title}</strong>
+            <label>
+              <input
+                type="checkbox"
+                checked={task.completed}
+                onChange={() =>
+                  toggleTaskMutation.mutate({
+                    id: task.id,
+                    completed: !task.completed,
+                  })
+                }
+              />
+
+              <strong
+                style={{
+                  textDecoration: task.completed ? "line-through" : "none",
+                }}
+              >
+                {task.title}
+              </strong>
+            </label>
+
             {task.description && <span> - {task.description}</span>}
           </li>
         ))}
