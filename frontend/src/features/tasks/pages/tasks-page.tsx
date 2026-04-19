@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createTask, getTasks } from "../api";
-import { updateTaskCompleted } from "../api";
+import { createTask, deleteTask, getTasks, updateTaskCompleted } from "../api";
 
 export default function TasksPage() {
   const queryClient = useQueryClient();
@@ -17,9 +16,7 @@ export default function TasksPage() {
 
   const createTaskMutation = useMutation({
     mutationFn: createTask,
-    onSuccess: async (createdTask) => {
-      console.log("Task created successfully:", createdTask);
-
+    onSuccess: async () => {
       setTitle("");
       setDescription("");
       setErrorMessage("");
@@ -32,26 +29,51 @@ export default function TasksPage() {
   });
 
   const toggleTaskMutation = useMutation({
-  mutationFn: ({ id, completed }: { id: number; completed: boolean }) =>
-    updateTaskCompleted(id, completed),
+    mutationFn: ({ id, completed }: { id: number; completed: boolean }) =>
+      updateTaskCompleted(id, completed),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (error) => {
+      console.error("Toggle task error:", error);
+    },
+  });
 
-  onSuccess: async () => {
-    await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-  },
-
-  onError: (error) => {
-    console.error("Toggle task error:", error);
-  },
-});
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskId: number) => deleteTask(taskId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (error) => {
+      console.error("Delete task error:", error);
+    },
+  });
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage("");
 
+    if (!title.trim()) {
+      setErrorMessage("Title is required");
+      return;
+    }
+
     createTaskMutation.mutate({
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
     });
+  }
+
+  function handleDelete(taskId: number) {
+    const confirmed = confirm("Are you sure you want to delete this task?");
+    if (!confirmed) return;
+
+    deleteTaskMutation.mutate(taskId);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("access_token");
+    window.location.href = "/login";
   }
 
   if (tasksQuery.isLoading) {
@@ -64,7 +86,10 @@ export default function TasksPage() {
 
   return (
     <div>
-      <h1>My Tasks</h1>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <h1>My Tasks</h1>
+        <button onClick={handleLogout}>Logout</button>
+      </div>
 
       <form onSubmit={handleSubmit}>
         <div>
@@ -88,7 +113,7 @@ export default function TasksPage() {
         </button>
       </form>
 
-      {errorMessage && <p>{errorMessage}</p>}
+      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
 
       {tasksQuery.data && tasksQuery.data.length === 0 && (
         <p>No tasks available.</p>
@@ -119,6 +144,14 @@ export default function TasksPage() {
             </label>
 
             {task.description && <span> - {task.description}</span>}
+
+            <button
+              type="button"
+              onClick={() => handleDelete(task.id)}
+              style={{ marginLeft: "10px" }}
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>

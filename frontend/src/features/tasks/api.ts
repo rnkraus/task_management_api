@@ -33,3 +33,8 @@ export async function updateTaskCompleted(
 
   return res.data;
 }
+
+export async function deleteTask(taskId: number) {
+  const res = await api.delete(`/tasks/${taskId}`);
+  return res.data;
+}
