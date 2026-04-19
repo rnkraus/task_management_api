@@ -1,12 +1,19 @@
 import { api } from "../../lib/api-client";
 import type { CreateTaskInput, Task } from "./types";
 
-export async function getTasks(): Promise<Task[]> {
+type GetTasksParams = {
+  search?: string;
+  completed?: boolean;
+};
+
+export async function getTasks(params?: GetTasksParams): Promise<Task[]> {
   const res = await api.get("/tasks", {
     params: {
       limit: 100,
       sort_by: "created_at",
       order: "desc",
+      search: params?.search || undefined,
+      completed: params?.completed,
     },
   });
 

@@ -8,10 +8,21 @@ export default function TasksPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [search, setSearch] = useState("");
+  const [completedFilter, setCompletedFilter] = useState<
+    "all" | "completed" | "open"
+  >("all");
 
   const tasksQuery = useQuery({
-    queryKey: ["tasks"],
-    queryFn: getTasks,
+    queryKey: ["tasks", search, completedFilter],
+    queryFn: () =>
+      getTasks({
+        search,
+        completed:
+          completedFilter === "all"
+            ? undefined
+            : completedFilter === "completed",
+      }),
   });
 
   const createTaskMutation = useMutation({
@@ -114,6 +125,28 @@ export default function TasksPage() {
       </form>
 
       {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
+
+      <div style={{ marginTop: "16px", marginBottom: "16px" }}>
+        <input
+          placeholder="Search tasks"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ marginRight: "10px" }}
+        />
+
+        <select
+          value={completedFilter}
+          onChange={(e) =>
+            setCompletedFilter(
+              e.target.value as "all" | "completed" | "open"
+            )
+          }
+        >
+          <option value="all">All</option>
+          <option value="open">Open</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
 
       {tasksQuery.data && tasksQuery.data.length === 0 && (
         <p>No tasks available.</p>
