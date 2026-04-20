@@ -45,3 +45,11 @@ export async function deleteTask(taskId: number) {
   const res = await api.delete(`/tasks/${taskId}`);
   return res.data;
 }
+
+export async function updateTask(
+  taskId: number,
+  payload: { title?: string; description?: string; completed?: boolean }
+): Promise<Task> {
+  const res = await api.patch(`/tasks/${taskId}`, payload);
+  return res.data;
+}

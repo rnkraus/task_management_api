@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createTask, deleteTask, getTasks, updateTaskCompleted } from "../api";
+import {
+  createTask,
+  deleteTask,
+  getTasks,
+  updateTask,
+  updateTaskCompleted,
+} from "../api";
 
 export default function TasksPage() {
   const queryClient = useQueryClient();
@@ -12,6 +18,10 @@ export default function TasksPage() {
   const [completedFilter, setCompletedFilter] = useState<
     "all" | "completed" | "open"
   >("all");
+
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   const tasksQuery = useQuery({
     queryKey: ["tasks", search, completedFilter],
@@ -60,6 +70,32 @@ export default function TasksPage() {
     },
   });
 
+  const updateTaskMutation = useMutation({
+    mutationFn: ({
+      id,
+      title,
+      description,
+    }: {
+      id: number;
+      title: string;
+      description: string;
+    }) =>
+      updateTask(id, {
+        title,
+        description,
+      }),
+    onSuccess: async () => {
+      setEditingTaskId(null);
+      setEditTitle("");
+      setEditDescription("");
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (error) => {
+      console.error("Update task error:", error);
+      setErrorMessage("Failed to update task");
+    },
+  });
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage("");
@@ -85,6 +121,38 @@ export default function TasksPage() {
   function handleLogout() {
     localStorage.removeItem("access_token");
     window.location.href = "/login";
+  }
+
+  function startEditing(task: {
+    id: number;
+    title: string;
+    description: string | null;
+  }) {
+    setEditingTaskId(task.id);
+    setEditTitle(task.title);
+    setEditDescription(task.description ?? "");
+    setErrorMessage("");
+  }
+
+  function cancelEditing() {
+    setEditingTaskId(null);
+    setEditTitle("");
+    setEditDescription("");
+  }
+
+  function saveEdit(taskId: number) {
+    setErrorMessage("");
+
+    if (!editTitle.trim()) {
+      setErrorMessage("Title is required");
+      return;
+    }
+
+    updateTaskMutation.mutate({
+      id: taskId,
+      title: editTitle.trim(),
+      description: editDescription.trim(),
+    });
   }
 
   if (tasksQuery.isLoading) {
@@ -154,37 +222,83 @@ export default function TasksPage() {
 
       <ul>
         {tasksQuery.data?.map((task) => (
-          <li key={task.id}>
-            <label>
-              <input
-                type="checkbox"
-                checked={task.completed}
-                onChange={() =>
-                  toggleTaskMutation.mutate({
-                    id: task.id,
-                    completed: !task.completed,
-                  })
-                }
-              />
+          <li key={task.id} style={{ marginBottom: "12px" }}>
+            {editingTaskId === task.id ? (
+              <div>
+                <div>
+                  <input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    placeholder="Edit title"
+                  />
+                </div>
 
-              <strong
-                style={{
-                  textDecoration: task.completed ? "line-through" : "none",
-                }}
-              >
-                {task.title}
-              </strong>
-            </label>
+                <div>
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Edit description"
+                  />
+                </div>
 
-            {task.description && <span> - {task.description}</span>}
+                <button
+                  type="button"
+                  onClick={() => saveEdit(task.id)}
+                  disabled={updateTaskMutation.isPending}
+                >
+                  {updateTaskMutation.isPending ? "Saving..." : "Save"}
+                </button>
 
-            <button
-              type="button"
-              onClick={() => handleDelete(task.id)}
-              style={{ marginLeft: "10px" }}
-            >
-              Delete
-            </button>
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  style={{ marginLeft: "8px" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={task.completed}
+                    onChange={() =>
+                      toggleTaskMutation.mutate({
+                        id: task.id,
+                        completed: !task.completed,
+                      })
+                    }
+                  />
+
+                  <strong
+                    style={{
+                      textDecoration: task.completed ? "line-through" : "none",
+                    }}
+                  >
+                    {task.title}
+                  </strong>
+                </label>
+
+                {task.description && <span> - {task.description}</span>}
+
+                <button
+                  type="button"
+                  onClick={() => startEditing(task)}
+                  style={{ marginLeft: "10px" }}
+                >
+                  Edit
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDelete(task.id)}
+                  style={{ marginLeft: "10px" }}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
           </li>
         ))}
       </ul>
