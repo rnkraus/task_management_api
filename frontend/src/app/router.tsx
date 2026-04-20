@@ -1,7 +1,9 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import LoginPage from "../features/auth/pages/login-page";
+import RegisterPage from "../features/auth/pages/register-page";
 import TasksPage from "../features/tasks/pages/tasks-page";
+import ProtectedRoute from "./protected-route";
 
 export const router = createBrowserRouter([
   {
@@ -13,7 +15,15 @@ export const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
+    path: "/register",
+    element: <RegisterPage />,
+  },
+  {
     path: "/tasks",
-    element: <TasksPage />,
+    element: (
+      <ProtectedRoute>
+        <TasksPage />
+      </ProtectedRoute>
+    ),
   },
 ]);

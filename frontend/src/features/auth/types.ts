@@ -3,6 +3,12 @@ export type LoginResponse = {
   token_type: string;
 };
 
+export type RegisterInput = {
+  email: string;
+  name: string;
+  password: string;
+};
+
 export type User = {
   id: number;
   email: string;

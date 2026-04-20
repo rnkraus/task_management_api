@@ -1,5 +1,5 @@
 import { api } from "../../lib/api-client";
-import type { LoginResponse, User } from "./types";
+import type { LoginResponse, RegisterInput, User } from "./types";
 
 export async function login(
   email: string,
@@ -13,6 +13,16 @@ export async function login(
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
+  });
+
+  return res.data;
+}
+
+export async function register(data: RegisterInput): Promise<User> {
+  const res = await api.post("/auth/register", {
+    email: data.email,
+    name: data.name,
+    password: data.password,
   });
 
   return res.data;
