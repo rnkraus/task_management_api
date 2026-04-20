@@ -1,0 +1,178 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #111827;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 32px;
+}
+
+.section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 20px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+}
+
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #111827;
+  color: white;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button-secondary {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.button-danger {
+  background: #dc2626;
+  color: white;
+}
+
+.error-text {
+  color: #dc2626;
+  margin-top: 10px;
+}
+
+.muted-text {
+  color: #6b7280;
+}
+
+.controls-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.controls-row > * {
+  flex: 1;
+  min-width: 180px;
+}
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.task-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #fafafa;
+}
+
+.task-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.task-info {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.task-title {
+  font-weight: 600;
+}
+
+.task-title-completed {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+.task-description {
+  margin-top: 6px;
+  color: #4b5563;
+}
+
+.ai-box {
+  background: #f9fafb;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.empty-state {
+  padding: 20px;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  text-align: center;
+  background: #fafafa;
+}

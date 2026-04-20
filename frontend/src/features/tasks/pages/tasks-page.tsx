@@ -240,241 +240,285 @@ export default function TasksPage() {
   }
 
   if (tasksQuery.isLoading) {
-    return <div>Loading tasks...</div>;
+    return (
+      <div className="page">
+        <div className="empty-state">Loading tasks...</div>
+      </div>
+    );
   }
 
   if (tasksQuery.isError) {
-    return <div>Failed to load tasks.</div>;
+    return (
+      <div className="page">
+        <div className="empty-state">Failed to load tasks.</div>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h1>My Tasks</h1>
-        <button onClick={handleLogout}>Logout</button>
+    <div className="page">
+      <div className="page-header">
+        <h1 className="page-title">My Tasks</h1>
+        <button className="button button-secondary" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div>
+      <section className="section">
+        <h2 className="section-title">Create Task</h2>
+
+        <form onSubmit={handleSubmit} className="form-grid">
           <input
+            className="input"
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
-        </div>
 
-        <div>
           <textarea
+            className="textarea"
             placeholder="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-        </div>
 
-        <button type="submit" disabled={createTaskMutation.isPending}>
-          {createTaskMutation.isPending ? "Saving..." : "Create Task"}
-        </button>
-      </form>
+          <div className="button-row">
+            <button
+              className="button"
+              type="submit"
+              disabled={createTaskMutation.isPending}
+            >
+              {createTaskMutation.isPending ? "Saving..." : "Create Task"}
+            </button>
 
-      <div style={{ marginTop: "10px" }}>
-        <button
-          type="button"
-          onClick={handleImproveTask}
-          disabled={improveTaskMutation.isPending}
-        >
-          {improveTaskMutation.isPending ? "Improving..." : "Improve with AI"}
-        </button>
-      </div>
+            <button
+              className="button button-secondary"
+              type="button"
+              onClick={handleImproveTask}
+              disabled={improveTaskMutation.isPending}
+            >
+              {improveTaskMutation.isPending
+                ? "Improving..."
+                : "Improve with AI"}
+            </button>
+          </div>
+        </form>
 
-      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
-      {aiErrorMessage && <p style={{ color: "red" }}>{aiErrorMessage}</p>}
+        {errorMessage && <p className="error-text">{errorMessage}</p>}
+        {aiErrorMessage && <p className="error-text">{aiErrorMessage}</p>}
 
-      {(aiSuggestedTitle || aiSuggestedDescription) && (
-        <div style={{ marginTop: "16px", marginBottom: "16px" }}>
-          <h2>AI Suggestion</h2>
-          <p>
-            <strong>Suggested title:</strong> {aiSuggestedTitle}
-          </p>
-          <p>
-            <strong>Suggested description:</strong>{" "}
-            {aiSuggestedDescription || "None"}
-          </p>
+        {(aiSuggestedTitle || aiSuggestedDescription) && (
+          <div className="ai-box" style={{ marginTop: "16px" }}>
+            <h3>AI Suggestion</h3>
+            <p>
+              <strong>Suggested title:</strong> {aiSuggestedTitle}
+            </p>
+            <p>
+              <strong>Suggested description:</strong>{" "}
+              {aiSuggestedDescription || "None"}
+            </p>
 
-          <button type="button" onClick={applyAiSuggestion}>
-            Apply Suggestion
+            <button className="button" type="button" onClick={applyAiSuggestion}>
+              Apply Suggestion
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="section">
+        <h2 className="section-title">AI Tools</h2>
+
+        <div className="button-row">
+          <button
+            className="button"
+            type="button"
+            onClick={handleGenerateAiPlan}
+            disabled={taskPlanMutation.isPending}
+          >
+            {taskPlanMutation.isPending
+              ? "Generating plan..."
+              : "Generate AI Plan"}
+          </button>
+
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={handleGroupTasksWithAi}
+            disabled={groupedTasksMutation.isPending}
+          >
+            {groupedTasksMutation.isPending
+              ? "Grouping tasks..."
+              : "Group Tasks with AI"}
           </button>
         </div>
-      )}
 
-      <div style={{ marginTop: "16px", marginBottom: "16px" }}>
-        <button
-          type="button"
-          onClick={handleGenerateAiPlan}
-          disabled={taskPlanMutation.isPending}
-        >
-          {taskPlanMutation.isPending
-            ? "Generating plan..."
-            : "Generate AI Plan"}
-        </button>
+        {aiPlanErrorMessage && <p className="error-text">{aiPlanErrorMessage}</p>}
+        {aiGroupsErrorMessage && (
+          <p className="error-text">{aiGroupsErrorMessage}</p>
+        )}
 
-        <button
-          type="button"
-          onClick={handleGroupTasksWithAi}
-          disabled={groupedTasksMutation.isPending}
-          style={{ marginLeft: "10px" }}
-        >
-          {groupedTasksMutation.isPending
-            ? "Grouping tasks..."
-            : "Group Tasks with AI"}
-        </button>
-      </div>
+        {aiPlan.length > 0 && (
+          <div className="ai-box" style={{ marginTop: "16px" }}>
+            <h3>AI Task Plan</h3>
+            <ol>
+              {aiPlan.map((step) => (
+                <li key={step.id}>
+                  <strong>{step.title}</strong> - {step.reason}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
 
-      {aiPlanErrorMessage && (
-        <p style={{ color: "red" }}>{aiPlanErrorMessage}</p>
-      )}
+        {aiGroups.length > 0 && (
+          <div className="ai-box" style={{ marginTop: "16px" }}>
+            <h3>AI Task Groups</h3>
 
-      {aiPlan.length > 0 && (
-        <div style={{ marginTop: "16px", marginBottom: "16px" }}>
-          <h2>AI Task Plan</h2>
-          <ol>
-            {aiPlan.map((step) => (
-              <li key={step.id}>
-                <strong>{step.title}</strong> - {step.reason}
+            {aiGroups.map((group) => (
+              <div key={group.group_name} style={{ marginBottom: "12px" }}>
+                <h4>{group.group_name}</h4>
+                <ul>
+                  {group.tasks.map((task) => (
+                    <li key={task.id}>{task.title}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="section">
+        <h2 className="section-title">Task Controls</h2>
+
+        <div className="controls-row">
+          <input
+            className="input"
+            placeholder="Search tasks"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <select
+            className="select"
+            value={completedFilter}
+            onChange={(e) =>
+              setCompletedFilter(
+                e.target.value as "all" | "completed" | "open"
+              )
+            }
+          >
+            <option value="all">All</option>
+            <option value="open">Open</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </section>
+
+      <section className="section">
+        <h2 className="section-title">Task List</h2>
+
+        {tasksQuery.data && tasksQuery.data.length === 0 ? (
+          <div className="empty-state">
+            <p>No tasks available.</p>
+            <p className="muted-text">Create your first task to get started.</p>
+          </div>
+        ) : (
+          <ul className="task-list">
+            {tasksQuery.data?.map((task) => (
+              <li key={task.id} className="task-item">
+                {editingTaskId === task.id ? (
+                  <div className="form-grid">
+                    <input
+                      className="input"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="Edit title"
+                    />
+
+                    <textarea
+                      className="textarea"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      placeholder="Edit description"
+                    />
+
+                    <div className="button-row">
+                      <button
+                        className="button"
+                        type="button"
+                        onClick={() => saveEdit(task.id)}
+                        disabled={updateTaskMutation.isPending}
+                      >
+                        {updateTaskMutation.isPending ? "Saving..." : "Save"}
+                      </button>
+
+                      <button
+                        className="button button-secondary"
+                        type="button"
+                        onClick={cancelEditing}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="task-main">
+                    <div className="task-info">
+                      <input
+                        type="checkbox"
+                        checked={task.completed}
+                        onChange={() =>
+                          toggleTaskMutation.mutate({
+                            id: task.id,
+                            completed: !task.completed,
+                          })
+                        }
+                      />
+
+                      <div>
+                        <div
+                          className={
+                            task.completed
+                              ? "task-title task-title-completed"
+                              : "task-title"
+                          }
+                        >
+                          {task.title}
+                        </div>
+
+                        {task.description && (
+                          <div className="task-description">
+                            {task.description}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="button-row">
+                      <button
+                        className="button button-secondary"
+                        type="button"
+                        onClick={() => startEditing(task)}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        className="button button-danger"
+                        type="button"
+                        onClick={() => handleDelete(task.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
-          </ol>
-        </div>
-      )}
-
-      {aiGroupsErrorMessage && (
-        <p style={{ color: "red" }}>{aiGroupsErrorMessage}</p>
-      )}
-
-      {aiGroups.length > 0 && (
-        <div style={{ marginTop: "16px", marginBottom: "16px" }}>
-          <h2>AI Task Groups</h2>
-
-          {aiGroups.map((group) => (
-            <div key={group.group_name} style={{ marginBottom: "12px" }}>
-              <h3>{group.group_name}</h3>
-              <ul>
-                {group.tasks.map((task) => (
-                  <li key={task.id}>{task.title}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div style={{ marginTop: "16px", marginBottom: "16px" }}>
-        <input
-          placeholder="Search tasks"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ marginRight: "10px" }}
-        />
-
-        <select
-          value={completedFilter}
-          onChange={(e) =>
-            setCompletedFilter(
-              e.target.value as "all" | "completed" | "open"
-            )
-          }
-        >
-          <option value="all">All</option>
-          <option value="open">Open</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
-
-      {tasksQuery.data && tasksQuery.data.length === 0 && (
-        <p>No tasks available.</p>
-      )}
-
-      <ul>
-        {tasksQuery.data?.map((task) => (
-          <li key={task.id} style={{ marginBottom: "12px" }}>
-            {editingTaskId === task.id ? (
-              <div>
-                <div>
-                  <input
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    placeholder="Edit title"
-                  />
-                </div>
-
-                <div>
-                  <textarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    placeholder="Edit description"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => saveEdit(task.id)}
-                  disabled={updateTaskMutation.isPending}
-                >
-                  {updateTaskMutation.isPending ? "Saving..." : "Save"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={cancelEditing}
-                  style={{ marginLeft: "8px" }}
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <div>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() =>
-                      toggleTaskMutation.mutate({
-                        id: task.id,
-                        completed: !task.completed,
-                      })
-                    }
-                  />
-
-                  <strong
-                    style={{
-                      textDecoration: task.completed ? "line-through" : "none",
-                    }}
-                  >
-                    {task.title}
-                  </strong>
-                </label>
-
-                {task.description && <span> - {task.description}</span>}
-
-                <button
-                  type="button"
-                  onClick={() => startEditing(task)}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Edit
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDelete(task.id)}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
