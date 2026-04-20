@@ -7,7 +7,7 @@ import {
   updateTask,
   updateTaskCompleted,
 } from "../api";
-import { improveTask } from "../../ai/api";
+import { getTaskPlan, improveTask } from "../../ai/api";
 
 export default function TasksPage() {
   const queryClient = useQueryClient();
@@ -27,6 +27,11 @@ export default function TasksPage() {
   const [aiSuggestedTitle, setAiSuggestedTitle] = useState("");
   const [aiSuggestedDescription, setAiSuggestedDescription] = useState("");
   const [aiErrorMessage, setAiErrorMessage] = useState("");
+
+  const [aiPlan, setAiPlan] = useState<
+    { id: number; title: string; reason: string }[]
+  >([]);
+  const [aiPlanErrorMessage, setAiPlanErrorMessage] = useState("");
 
   const tasksQuery = useQuery({
     queryKey: ["tasks", search, completedFilter],
@@ -117,6 +122,18 @@ export default function TasksPage() {
     },
   });
 
+  const taskPlanMutation = useMutation({
+    mutationFn: getTaskPlan,
+    onSuccess: (data) => {
+      setAiPlan(data.steps);
+      setAiPlanErrorMessage("");
+    },
+    onError: (error) => {
+      console.error("Get task plan error:", error);
+      setAiPlanErrorMessage("Failed to generate AI plan");
+    },
+  });
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage("");
@@ -149,6 +166,11 @@ export default function TasksPage() {
   function applyAiSuggestion() {
     setTitle(aiSuggestedTitle);
     setDescription(aiSuggestedDescription);
+  }
+
+  function handleGenerateAiPlan() {
+    setAiPlanErrorMessage("");
+    taskPlanMutation.mutate();
   }
 
   function handleDelete(taskId: number) {
@@ -259,6 +281,35 @@ export default function TasksPage() {
           <button type="button" onClick={applyAiSuggestion}>
             Apply Suggestion
           </button>
+        </div>
+      )}
+
+      <div style={{ marginTop: "16px", marginBottom: "16px" }}>
+        <button
+          type="button"
+          onClick={handleGenerateAiPlan}
+          disabled={taskPlanMutation.isPending}
+        >
+          {taskPlanMutation.isPending
+            ? "Generating plan..."
+            : "Generate AI Plan"}
+        </button>
+      </div>
+
+      {aiPlanErrorMessage && (
+        <p style={{ color: "red" }}>{aiPlanErrorMessage}</p>
+      )}
+
+      {aiPlan.length > 0 && (
+        <div style={{ marginTop: "16px", marginBottom: "16px" }}>
+          <h2>AI Task Plan</h2>
+          <ol>
+            {aiPlan.map((step) => (
+              <li key={step.id}>
+                <strong>{step.title}</strong> - {step.reason}
+              </li>
+            ))}
+          </ol>
         </div>
       )}
 

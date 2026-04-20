@@ -1,5 +1,9 @@
 import { api } from "../../lib/api-client";
-import type { ImproveTaskRequest, ImproveTaskResponse } from "./types";
+import type {
+  ImproveTaskRequest,
+  ImproveTaskResponse,
+  TaskPlanResponse,
+} from "./types";
 
 export async function improveTask(
   payload: ImproveTaskRequest
@@ -9,5 +13,10 @@ export async function improveTask(
     description: payload.description ?? null,
   });
 
+  return res.data;
+}
+
+export async function getTaskPlan(): Promise<TaskPlanResponse> {
+  const res = await api.get("/ai/plan");
   return res.data;
 }
