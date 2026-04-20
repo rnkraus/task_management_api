@@ -8,8 +8,10 @@ import {
   updateTaskCompleted,
 } from "../api";
 import { getGroupedTasks, getTaskPlan, improveTask } from "../../ai/api";
+import { useCurrentUser } from "../../auth/hooks/use-current-user";
 
 export default function TasksPage() {
+  const currentUserQuery = useCurrentUser();
   const queryClient = useQueryClient();
 
   const [title, setTitle] = useState("");
@@ -259,9 +261,18 @@ export default function TasksPage() {
     <div className="page">
       <div className="page-header">
         <h1 className="page-title">My Tasks</h1>
-        <button className="button button-secondary" onClick={handleLogout}>
-          Logout
-        </button>
+
+        <div className="button-row">
+          {currentUserQuery.data && (
+            <span className="muted-text">
+              {currentUserQuery.data.name} ({currentUserQuery.data.email})
+            </span>
+          )}
+
+          <button className="button button-secondary" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </div>
 
       <section className="section">

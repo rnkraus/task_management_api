@@ -15,13 +15,10 @@ export async function login(
     },
   });
 
-  console.log("LOGIN RESPONSE:", res.data);
-
   return res.data;
 }
 
-export async function getMe(): Promise<User> {
+export async function getCurrentUser(): Promise<User> {
   const res = await api.get("/users/me");
-  console.log("GET ME RESPONSE:", res.data);
   return res.data;
 }

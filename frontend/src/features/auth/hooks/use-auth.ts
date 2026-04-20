@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMe } from "../api";
+import { getCurrentUser } from "../api";
 
 export function useAuth() {
   const token = localStorage.getItem("access_token");
 
   const meQuery = useQuery({
     queryKey: ["me"],
-    queryFn: getMe,
+    queryFn: getCurrentUser,
     enabled: !!token,
     retry: false,
   });
