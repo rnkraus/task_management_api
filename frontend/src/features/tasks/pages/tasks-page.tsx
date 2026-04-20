@@ -7,6 +7,7 @@ import {
   updateTask,
   updateTaskCompleted,
 } from "../api";
+import { improveTask } from "../../ai/api";
 
 export default function TasksPage() {
   const queryClient = useQueryClient();
@@ -22,6 +23,10 @@ export default function TasksPage() {
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+
+  const [aiSuggestedTitle, setAiSuggestedTitle] = useState("");
+  const [aiSuggestedDescription, setAiSuggestedDescription] = useState("");
+  const [aiErrorMessage, setAiErrorMessage] = useState("");
 
   const tasksQuery = useQuery({
     queryKey: ["tasks", search, completedFilter],
@@ -41,6 +46,9 @@ export default function TasksPage() {
       setTitle("");
       setDescription("");
       setErrorMessage("");
+      setAiSuggestedTitle("");
+      setAiSuggestedDescription("");
+      setAiErrorMessage("");
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
     onError: (error) => {
@@ -96,6 +104,19 @@ export default function TasksPage() {
     },
   });
 
+  const improveTaskMutation = useMutation({
+    mutationFn: improveTask,
+    onSuccess: (data) => {
+      setAiSuggestedTitle(data.suggested_title);
+      setAiSuggestedDescription(data.suggested_description ?? "");
+      setAiErrorMessage("");
+    },
+    onError: (error) => {
+      console.error("Improve task error:", error);
+      setAiErrorMessage("Failed to improve task");
+    },
+  });
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage("");
@@ -109,6 +130,25 @@ export default function TasksPage() {
       title: title.trim(),
       description: description.trim(),
     });
+  }
+
+  function handleImproveTask() {
+    setAiErrorMessage("");
+
+    if (!title.trim()) {
+      setAiErrorMessage("Title is required before using AI");
+      return;
+    }
+
+    improveTaskMutation.mutate({
+      title: title.trim(),
+      description: description.trim(),
+    });
+  }
+
+  function applyAiSuggestion() {
+    setTitle(aiSuggestedTitle);
+    setDescription(aiSuggestedDescription);
   }
 
   function handleDelete(taskId: number) {
@@ -192,7 +232,35 @@ export default function TasksPage() {
         </button>
       </form>
 
+      <div style={{ marginTop: "10px" }}>
+        <button
+          type="button"
+          onClick={handleImproveTask}
+          disabled={improveTaskMutation.isPending}
+        >
+          {improveTaskMutation.isPending ? "Improving..." : "Improve with AI"}
+        </button>
+      </div>
+
       {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
+      {aiErrorMessage && <p style={{ color: "red" }}>{aiErrorMessage}</p>}
+
+      {(aiSuggestedTitle || aiSuggestedDescription) && (
+        <div style={{ marginTop: "16px", marginBottom: "16px" }}>
+          <h2>AI Suggestion</h2>
+          <p>
+            <strong>Suggested title:</strong> {aiSuggestedTitle}
+          </p>
+          <p>
+            <strong>Suggested description:</strong>{" "}
+            {aiSuggestedDescription || "None"}
+          </p>
+
+          <button type="button" onClick={applyAiSuggestion}>
+            Apply Suggestion
+          </button>
+        </div>
+      )}
 
       <div style={{ marginTop: "16px", marginBottom: "16px" }}>
         <input
