@@ -7,7 +7,7 @@ import {
   updateTask,
   updateTaskCompleted,
 } from "../api";
-import { getTaskPlan, improveTask } from "../../ai/api";
+import { getGroupedTasks, getTaskPlan, improveTask } from "../../ai/api";
 
 export default function TasksPage() {
   const queryClient = useQueryClient();
@@ -32,6 +32,11 @@ export default function TasksPage() {
     { id: number; title: string; reason: string }[]
   >([]);
   const [aiPlanErrorMessage, setAiPlanErrorMessage] = useState("");
+
+  const [aiGroups, setAiGroups] = useState<
+    { group_name: string; tasks: { id: number; title: string }[] }[]
+  >([]);
+  const [aiGroupsErrorMessage, setAiGroupsErrorMessage] = useState("");
 
   const tasksQuery = useQuery({
     queryKey: ["tasks", search, completedFilter],
@@ -134,6 +139,18 @@ export default function TasksPage() {
     },
   });
 
+  const groupedTasksMutation = useMutation({
+    mutationFn: getGroupedTasks,
+    onSuccess: (data) => {
+      setAiGroups(data.groups);
+      setAiGroupsErrorMessage("");
+    },
+    onError: (error) => {
+      console.error("Get grouped tasks error:", error);
+      setAiGroupsErrorMessage("Failed to group tasks");
+    },
+  });
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage("");
@@ -171,6 +188,11 @@ export default function TasksPage() {
   function handleGenerateAiPlan() {
     setAiPlanErrorMessage("");
     taskPlanMutation.mutate();
+  }
+
+  function handleGroupTasksWithAi() {
+    setAiGroupsErrorMessage("");
+    groupedTasksMutation.mutate();
   }
 
   function handleDelete(taskId: number) {
@@ -294,6 +316,17 @@ export default function TasksPage() {
             ? "Generating plan..."
             : "Generate AI Plan"}
         </button>
+
+        <button
+          type="button"
+          onClick={handleGroupTasksWithAi}
+          disabled={groupedTasksMutation.isPending}
+          style={{ marginLeft: "10px" }}
+        >
+          {groupedTasksMutation.isPending
+            ? "Grouping tasks..."
+            : "Group Tasks with AI"}
+        </button>
       </div>
 
       {aiPlanErrorMessage && (
@@ -310,6 +343,27 @@ export default function TasksPage() {
               </li>
             ))}
           </ol>
+        </div>
+      )}
+
+      {aiGroupsErrorMessage && (
+        <p style={{ color: "red" }}>{aiGroupsErrorMessage}</p>
+      )}
+
+      {aiGroups.length > 0 && (
+        <div style={{ marginTop: "16px", marginBottom: "16px" }}>
+          <h2>AI Task Groups</h2>
+
+          {aiGroups.map((group) => (
+            <div key={group.group_name} style={{ marginBottom: "12px" }}>
+              <h3>{group.group_name}</h3>
+              <ul>
+                {group.tasks.map((task) => (
+                  <li key={task.id}>{task.title}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       )}
 

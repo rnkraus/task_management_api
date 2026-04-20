@@ -17,3 +17,17 @@ export type PlannedTaskStep = {
 export type TaskPlanResponse = {
   steps: PlannedTaskStep[];
 };
+
+export type GroupedTaskItem = {
+  id: number;
+  title: string;
+};
+
+export type TaskGroup = {
+  group_name: string;
+  tasks: GroupedTaskItem[];
+};
+
+export type GroupTasksResponse = {
+  groups: TaskGroup[];
+};

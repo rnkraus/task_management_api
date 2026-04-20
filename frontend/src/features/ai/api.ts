@@ -1,5 +1,6 @@
 import { api } from "../../lib/api-client";
 import type {
+  GroupTasksResponse,
   ImproveTaskRequest,
   ImproveTaskResponse,
   TaskPlanResponse,
@@ -18,5 +19,10 @@ export async function improveTask(
 
 export async function getTaskPlan(): Promise<TaskPlanResponse> {
   const res = await api.get("/ai/plan");
+  return res.data;
+}
+
+export async function getGroupedTasks(): Promise<GroupTasksResponse> {
+  const res = await api.get("/ai/group-tasks");
   return res.data;
 }

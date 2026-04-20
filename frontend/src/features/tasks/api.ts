@@ -33,7 +33,7 @@ export async function createTask(payload: CreateTaskInput): Promise<Task> {
 export async function updateTaskCompleted(
   taskId: number,
   completed: boolean
-) {
+): Promise<Task> {
   const res = await api.patch(`/tasks/${taskId}`, {
     completed,
   });
@@ -41,7 +41,7 @@ export async function updateTaskCompleted(
   return res.data;
 }
 
-export async function deleteTask(taskId: number) {
+export async function deleteTask(taskId: number): Promise<Task> {
   const res = await api.delete(`/tasks/${taskId}`);
   return res.data;
 }
