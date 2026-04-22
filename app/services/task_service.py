@@ -27,7 +27,7 @@ def get_all_tasks(
     search: str | None = None,
     limit: int = 10,
     offset: int = 0,
-    sort_by: str = "id",
+    sort_by: str = "due_date",
     order: str = "asc",
 ) -> list[TaskModel]:
     query = db.query(TaskModel).filter(TaskModel.user_id == user_id)
@@ -44,7 +44,17 @@ def get_all_tasks(
             )
         )
 
-    sort_column = getattr(TaskModel, sort_by)
+    allowed_sort_fields = {
+        "id": TaskModel.id,
+        "title": TaskModel.title,
+        "completed": TaskModel.completed,
+        "created_at": TaskModel.created_at,
+        "updated_at": TaskModel.updated_at,
+        "priority": TaskModel.priority,
+        "due_date": TaskModel.due_date,
+    }
+
+    sort_column = allowed_sort_fields.get(sort_by, TaskModel.due_date)
 
     if order == "desc":
         query = query.order_by(desc(sort_column))

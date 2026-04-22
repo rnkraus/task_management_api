@@ -21,6 +21,10 @@ export default function TasksPage() {
   const [completedFilter, setCompletedFilter] = useState<
     "all" | "completed" | "open"
   >("all");
+  const [sortBy, setSortBy] = useState<
+    "title" | "created_at" | "priority" | "due_date"
+  >("due_date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState(3);
 
@@ -45,7 +49,13 @@ export default function TasksPage() {
   const [aiGroupsErrorMessage, setAiGroupsErrorMessage] = useState("");
 
   const tasksQuery = useQuery({
-    queryKey: ["tasks", search, completedFilter],
+    queryKey: [
+      "tasks",
+      search,
+      completedFilter,
+      sortBy,
+      sortOrder,
+    ],
     queryFn: () =>
       getTasks({
         search,
@@ -53,6 +63,8 @@ export default function TasksPage() {
           completedFilter === "all"
             ? undefined
             : completedFilter === "completed",
+        sort_by: sortBy,
+        order: sortOrder,
       }),
   });
 
@@ -478,6 +490,34 @@ export default function TasksPage() {
             <option value="all">All</option>
             <option value="open">Open</option>
             <option value="completed">Completed</option>
+          </select>
+
+          <select
+            className="select"
+            value={sortBy}
+            onChange={(e) =>
+              setSortBy(
+                e.target.value as
+                | "title"
+                | "created_at"
+                | "priority"
+                | "due_date"
+              )
+            }
+          >
+            <option value="title">Title</option>
+            <option value="created_at">Created Date</option>
+            <option value="priority">Priority</option>
+            <option value="due_date">Due Date</option>
+          </select>
+
+          <select
+            className="select"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+          >
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
           </select>
         </div>
       </section>
