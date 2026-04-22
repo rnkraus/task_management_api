@@ -9,6 +9,8 @@ class Task(Base):
     title = Column(String, nullable=False)
     completed = Column(Boolean, default=False)
     description = Column(String, nullable=True)
+    due_date = Column(DateTime(timezone=True), nullable=True)
+    priority = Column(Integer, nullable=False, default=3)
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -22,4 +24,4 @@ class Task(Base):
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    user = relationship("User")
+    user = relationship("User", back_populates="tasks")

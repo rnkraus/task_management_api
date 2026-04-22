@@ -25,6 +25,8 @@ export async function createTask(payload: CreateTaskInput): Promise<Task> {
     title: payload.title,
     description: payload.description ?? null,
     completed: payload.completed ?? false,
+    due_date: payload.due_date ?? null,
+    priority: payload.priority ?? 3,
   });
 
   return res.data;
@@ -48,7 +50,13 @@ export async function deleteTask(taskId: number): Promise<Task> {
 
 export async function updateTask(
   taskId: number,
-  payload: { title?: string; description?: string; completed?: boolean }
+  payload: {
+    title?: string;
+    description?: string;
+    completed?: boolean;
+    due_date?: string | null;
+    priority?: number;
+  }
 ): Promise<Task> {
   const res = await api.patch(`/tasks/${taskId}`, payload);
   return res.data;

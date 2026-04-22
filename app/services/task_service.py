@@ -1,5 +1,6 @@
 from sqlalchemy import asc, desc, or_
 from sqlalchemy.orm import Session
+
 from app.models.task import Task as TaskModel
 from app.schemas.task import TaskCreate, TaskPut, TaskUpdate
 
@@ -9,12 +10,15 @@ def create_task(db: Session, task_data: TaskCreate, user_id: int) -> TaskModel:
         title=task_data.title,
         completed=task_data.completed,
         description=task_data.description,
+        due_date=task_data.due_date,
+        priority=task_data.priority,
         user_id=user_id,
     )
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
     return new_task
+
 
 def get_all_tasks(
     db: Session,
@@ -75,6 +79,8 @@ def update_task(
     task.title = task_data.title
     task.completed = task_data.completed
     task.description = task_data.description
+    task.due_date = task_data.due_date
+    task.priority = task_data.priority
 
     db.commit()
     db.refresh(task)
@@ -101,6 +107,10 @@ def patch_task(
         task.completed = task_data.completed
     if task_data.description is not None:
         task.description = task_data.description
+    if task_data.due_date is not None:
+        task.due_date = task_data.due_date
+    if task_data.priority is not None:
+        task.priority = task_data.priority
 
     db.commit()
     db.refresh(task)

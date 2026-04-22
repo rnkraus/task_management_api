@@ -21,10 +21,14 @@ export default function TasksPage() {
   const [completedFilter, setCompletedFilter] = useState<
     "all" | "completed" | "open"
   >("all");
+  const [dueDate, setDueDate] = useState("");
+  const [priority, setPriority] = useState(3);
 
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
+  const [editPriority, setEditPriority] = useState(3);
 
   const [aiSuggestedTitle, setAiSuggestedTitle] = useState("");
   const [aiSuggestedDescription, setAiSuggestedDescription] = useState("");
@@ -57,10 +61,16 @@ export default function TasksPage() {
     onSuccess: async () => {
       setTitle("");
       setDescription("");
+      setDueDate("");
+      setPriority(3);
       setErrorMessage("");
+
       setAiSuggestedTitle("");
       setAiSuggestedDescription("");
       setAiErrorMessage("");
+      setAiPlan([]);
+      setAiGroups([]);
+
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
     onError: (error) => {
@@ -95,19 +105,27 @@ export default function TasksPage() {
       id,
       title,
       description,
+      due_date,
+      priority,
     }: {
       id: number;
       title: string;
       description: string;
+      due_date: string | null;
+      priority: number;
     }) =>
       updateTask(id, {
         title,
         description,
+        due_date,
+        priority,
       }),
     onSuccess: async () => {
       setEditingTaskId(null);
       setEditTitle("");
       setEditDescription("");
+      setEditDueDate("");
+      setEditPriority(3);
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
     onError: (error) => {
@@ -165,6 +183,8 @@ export default function TasksPage() {
     createTaskMutation.mutate({
       title: title.trim(),
       description: description.trim(),
+      due_date: dueDate || null,
+      priority,
     });
   }
 
@@ -209,14 +229,29 @@ export default function TasksPage() {
     window.location.href = "/login";
   }
 
+  function formatDateTimeForInput(dateString: string | null) {
+    if (!dateString) return "";
+    return new Date(dateString).toISOString().slice(0, 16);
+  }
+
+  function formatPriority(priorityValue: number) {
+    if (priorityValue === 1) return "High";
+    if (priorityValue === 2) return "Medium";
+    return "Low";
+  }
+
   function startEditing(task: {
     id: number;
     title: string;
     description: string | null;
+    due_date: string | null;
+    priority: number;
   }) {
     setEditingTaskId(task.id);
     setEditTitle(task.title);
     setEditDescription(task.description ?? "");
+    setEditDueDate(formatDateTimeForInput(task.due_date));
+    setEditPriority(task.priority ?? 3);
     setErrorMessage("");
   }
 
@@ -224,6 +259,8 @@ export default function TasksPage() {
     setEditingTaskId(null);
     setEditTitle("");
     setEditDescription("");
+    setEditDueDate("");
+    setEditPriority(3);
   }
 
   function saveEdit(taskId: number) {
@@ -238,6 +275,8 @@ export default function TasksPage() {
       id: taskId,
       title: editTitle.trim(),
       description: editDescription.trim(),
+      due_date: editDueDate || null,
+      priority: editPriority,
     });
   }
 
@@ -292,6 +331,23 @@ export default function TasksPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
+
+          <input
+            className="input"
+            type="datetime-local"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+
+          <select
+            className="select"
+            value={priority}
+            onChange={(e) => setPriority(Number(e.target.value))}
+          >
+            <option value={1}>High</option>
+            <option value={2}>Medium</option>
+            <option value={3}>Low</option>
+          </select>
 
           <div className="button-row">
             <button
@@ -454,6 +510,23 @@ export default function TasksPage() {
                       placeholder="Edit description"
                     />
 
+                    <input
+                      className="input"
+                      type="datetime-local"
+                      value={editDueDate}
+                      onChange={(e) => setEditDueDate(e.target.value)}
+                    />
+
+                    <select
+                      className="select"
+                      value={editPriority}
+                      onChange={(e) => setEditPriority(Number(e.target.value))}
+                    >
+                      <option value={1}>High</option>
+                      <option value={2}>Medium</option>
+                      <option value={3}>Low</option>
+                    </select>
+
                     <div className="button-row">
                       <button
                         className="button"
@@ -503,6 +576,16 @@ export default function TasksPage() {
                             {task.description}
                           </div>
                         )}
+
+                        {task.due_date && (
+                          <div className="muted-text">
+                            Due: {new Date(task.due_date).toLocaleString()}
+                          </div>
+                        )}
+
+                        <div className="muted-text">
+                          Priority: {formatPriority(task.priority)}
+                        </div>
                       </div>
                     </div>
 
