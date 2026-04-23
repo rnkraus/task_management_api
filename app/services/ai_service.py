@@ -1,4 +1,5 @@
 from openai import OpenAI
+from datetime import datetime, timezone
 from app.core.config import settings
 import json
 
@@ -104,23 +105,70 @@ Tasks:
         return {"groups": []}
     
 
+def sort_tasks_for_plan(tasks: list[dict]) -> list[dict]:
+    today = datetime.now(timezone.utc).date()
+
+    def sort_key(task: dict):
+        priority = task.get("priority") or 3
+        due_date = task.get("due_date")
+
+        # Tasks without due date should still appear,
+        # but usually after tasks with deadlines.
+        if not due_date:
+            return (
+                1,          # tasks without due date come later
+                999999,     # very large days_until_due
+                priority,
+            )
+
+        try:
+            due_dt = datetime.fromisoformat(
+                due_date.replace("Z", "+00:00")
+            )
+
+            days_until_due = (
+                due_dt.date() - today
+            ).days
+
+        except Exception:
+            # fallback if parsing fails
+            days_until_due = 999999
+
+        return (
+            0,                  # tasks with due date first
+            days_until_due,     # earlier deadlines first
+            priority,           # high priority first (1 before 2 before 3)
+        )
+
+    open_tasks = [
+        task
+        for task in tasks
+        if not task.get("completed", False)
+    ]
+
+    return sorted(open_tasks, key=sort_key)
+
 def create_task_plan(tasks: list[dict]):
     client = get_openai_client()
 
+    sorted_tasks = sort_tasks_for_plan(tasks)
+
     prompt = f"""
-You help organize and prioritize tasks in a task management app.
+You are an AI assistant that creates practical and realistic task execution plans for a task management app.
 
-Create a logical execution plan for the following tasks.
-
-Guidelines:
-- Order tasks by priority and logical dependencies
-- Put urgent or blocking tasks earlier
-- Keep tasks close to their original meaning
-- Do not invent new tasks
-- Every task must appear exactly once
-- Give a short reason for the order of each task
-- Do not include any text outside JSON
-- Do not wrap the JSON in markdown or code blocks.
+Your job:
+- include every open task exactly once
+- do not remove tasks
+- do not add tasks
+- keep the title unchanged
+- tasks with due dates should primarily be ordered by the earliest deadlines first
+- overdue tasks should appear before future tasks
+- only flexibly reorder tasks that do not have a due_date
+- for tasks without a due_date, place higher-priority and faster-to-complete tasks earlier in the plan
+- maintain a practical and realistic execution order
+- write a short practical reason for why each task appears in its position in the plan, considering deadlines, priority, dependencies, blocking importance, or estimated effort
+- do not include any text outside JSON
+- do not wrap the JSON in markdown or code blocks
 
 Return ONLY valid JSON in this format:
 {{
@@ -133,8 +181,8 @@ Return ONLY valid JSON in this format:
   ]
 }}
 
-Tasks:
-{json.dumps(tasks, ensure_ascii=False)}
+Tasks in final order:
+{json.dumps(sorted_tasks, ensure_ascii=False)}
 """
 
     response = client.chat.completions.create(
@@ -147,7 +195,46 @@ Tasks:
 
     try:
         data = json.loads(content)
-        return {"steps": data.get("steps", [])}
+        steps = data.get("steps", [])
+
+        task_by_id = {task["id"]: task for task in sorted_tasks}
+
+        enriched_steps = []
+        returned_ids = set()
+
+        for step in steps:
+            task_id = step.get("id")
+            original_task = task_by_id.get(task_id)
+
+            if original_task is None:
+                continue
+
+            returned_ids.add(task_id)
+
+            enriched_steps.append(
+                {
+                    "id": original_task["id"],
+                    "title": original_task["title"],
+                    "reason": step.get("reason", ""),
+                    "due_date": original_task.get("due_date"),
+                    "priority": original_task.get("priority"),
+                }
+            )
+
+        for task in sorted_tasks:
+            if task["id"] not in returned_ids:
+                enriched_steps.append(
+                    {
+                        "id": task["id"],
+                        "title": task["title"],
+                        "reason": "Included because every open task must appear in the plan.",
+                        "due_date": task.get("due_date"),
+                        "priority": task.get("priority"),
+                    }
+                )
+
+        return {"steps": enriched_steps}
+
     except Exception as e:
         print("PARSE ERROR:", e)
         print("RAW:", content)

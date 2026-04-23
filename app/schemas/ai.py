@@ -29,6 +29,7 @@ class PlannedTaskStep(BaseModel):
     id: int
     title: str
     reason: str
+    due_date: str | None = None
 
 
 class TaskPlanResponse(BaseModel):

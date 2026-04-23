@@ -49,7 +49,18 @@ def group_tasks_endpoint(
         order="asc",
     )
 
-    task_data = [{"id": task.id, "title": task.title} for task in tasks if task.title and len(task.title) > 3]
+    task_data = [
+        {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "priority": task.priority,
+            "due_date": task.due_date.isoformat() if task.due_date else None,
+        }
+        for task in tasks
+        if task.title and len(task.title) > 3
+    ]
 
     return group_tasks(task_data)
 
@@ -68,6 +79,16 @@ def create_task_plan_endpoint(
         order="asc",
     )
 
-    task_data = [{"id": task.id, "title": task.title} for task in tasks]
-
+    task_data = [
+        {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "priority": task.priority,
+            "due_date": task.due_date.isoformat() if task.due_date else None,
+        }
+        for task in tasks
+        if task.title and len(task.title) > 3
+    ]
     return create_task_plan(task_data)

@@ -39,7 +39,12 @@ export default function TasksPage() {
   const [aiErrorMessage, setAiErrorMessage] = useState("");
 
   const [aiPlan, setAiPlan] = useState<
-    { id: number; title: string; reason: string }[]
+    {
+      id: number;
+      title: string;
+      reason: string;
+      due_date?: string | null;
+    }[]
   >([]);
   const [aiPlanErrorMessage, setAiPlanErrorMessage] = useState("");
 
@@ -443,6 +448,12 @@ export default function TasksPage() {
               {aiPlan.map((step) => (
                 <li key={step.id}>
                   <strong>{step.title}</strong> - {step.reason}
+
+                  {step.due_date && (
+                    <div className="muted-text">
+                      Due: {new Date(step.due_date).toLocaleString()}
+                    </div>
+                  )}
                 </li>
               ))}
             </ol>
