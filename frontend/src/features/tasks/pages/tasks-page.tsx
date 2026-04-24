@@ -1,23 +1,17 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import {
-  createTask,
-  deleteTask,
-  getTasks,
-  updateTask,
-  updateTaskCompleted,
-} from "../api";
-import { getGroupedTasks, getTaskPlan, improveTask } from "../../ai/api";
 import { useCurrentUser } from "../../auth/hooks/use-current-user";
+import { useAiTools } from "../../ai/hooks/use-ai-tools";
+import AiToolsPanel from "../../ai/components/ai-tools-panel";
 
 import TaskForm from "../components/task-form";
 import TaskFilters from "../components/task-filters";
 import TaskList from "../components/task-list";
+import { useTaskMutations } from "../hooks/use-task-mutations";
+import { useTaskQuery } from "../hooks/use-tasks";
 
 export default function TasksPage() {
   const currentUserQuery = useCurrentUser();
-  const queryClient = useQueryClient();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -61,135 +55,22 @@ export default function TasksPage() {
   >([]);
   const [aiGroupsErrorMessage, setAiGroupsErrorMessage] = useState("");
 
-  const tasksQuery = useQuery({
-    queryKey: ["tasks", search, completedFilter, sortBy, sortOrder],
-    queryFn: () =>
-      getTasks({
-        search,
-        completed:
-          completedFilter === "all"
-            ? undefined
-            : completedFilter === "completed",
-        sort_by: sortBy,
-        order: sortOrder,
-      }),
+  const tasksQuery = useTaskQuery({
+    search,
+    completedFilter,
+    sortBy,
+    sortOrder,
   });
 
-  const createTaskMutation = useMutation({
-    mutationFn: createTask,
-    onSuccess: async () => {
-      setTitle("");
-      setDescription("");
-      setDueDate("");
-      setPriority(3);
-      setErrorMessage("");
+  const {
+    createTaskMutation,
+    toggleTaskMutation,
+    updateTaskMutation,
+    deleteTaskMutation,
+  } = useTaskMutations();
 
-      setAiSuggestedTitle("");
-      setAiSuggestedDescription("");
-      setAiErrorMessage("");
-      setAiPlan([]);
-      setAiGroups([]);
-
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-    onError: (error) => {
-      console.error("Create task error:", error);
-      setErrorMessage("Failed to create task");
-    },
-  });
-
-  const toggleTaskMutation = useMutation({
-    mutationFn: ({ id, completed }: { id: number; completed: boolean }) =>
-      updateTaskCompleted(id, completed),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-    onError: (error) => {
-      console.error("Toggle task error:", error);
-    },
-  });
-
-  const deleteTaskMutation = useMutation({
-    mutationFn: (taskId: number) => deleteTask(taskId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-    onError: (error) => {
-      console.error("Delete task error:", error);
-    },
-  });
-
-  const updateTaskMutation = useMutation({
-    mutationFn: ({
-      id,
-      title,
-      description,
-      due_date,
-      priority,
-    }: {
-      id: number;
-      title: string;
-      description: string;
-      due_date: string | null;
-      priority: number;
-    }) =>
-      updateTask(id, {
-        title,
-        description,
-        due_date,
-        priority,
-      }),
-    onSuccess: async () => {
-      setEditingTaskId(null);
-      setEditTitle("");
-      setEditDescription("");
-      setEditDueDate("");
-      setEditPriority(3);
-
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-    onError: (error) => {
-      console.error("Update task error:", error);
-      setErrorMessage("Failed to update task");
-    },
-  });
-
-  const improveTaskMutation = useMutation({
-    mutationFn: improveTask,
-    onSuccess: (data) => {
-      setAiSuggestedTitle(data.suggested_title);
-      setAiSuggestedDescription(data.suggested_description ?? "");
-      setAiErrorMessage("");
-    },
-    onError: (error) => {
-      console.error("Improve task error:", error);
-      setAiErrorMessage("Failed to improve task");
-    },
-  });
-
-  const taskPlanMutation = useMutation({
-    mutationFn: getTaskPlan,
-    onSuccess: (data) => {
-      setAiPlan(data.steps);
-      setAiPlanErrorMessage("");
-    },
-    onError: (error) => {
-      console.error("Get task plan error:", error);
-      setAiPlanErrorMessage("Failed to generate AI plan");
-    },
-  });
-
-  const groupedTasksMutation = useMutation({
-    mutationFn: getGroupedTasks,
-    onSuccess: (data) => {
-      setAiGroups(data.groups);
-      setAiGroupsErrorMessage("");
-    },
-    onError: (error) => {
-      console.error("Get grouped tasks error:", error);
-      setAiGroupsErrorMessage("Failed to group tasks");
-    },
-  });
+  const { improveTaskMutation, taskPlanMutation, groupedTasksMutation } =
+    useAiTools();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -200,12 +81,32 @@ export default function TasksPage() {
       return;
     }
 
-    createTaskMutation.mutate({
-      title: title.trim(),
-      description: description.trim(),
-      due_date: dueDate || null,
-      priority,
-    });
+    createTaskMutation.mutate(
+      {
+        title: title.trim(),
+        description: description.trim(),
+        due_date: dueDate || null,
+        priority,
+      },
+      {
+        onSuccess: () => {
+          setTitle("");
+          setDescription("");
+          setDueDate("");
+          setPriority(3);
+          setErrorMessage("");
+
+          setAiSuggestedTitle("");
+          setAiSuggestedDescription("");
+          setAiErrorMessage("");
+          setAiPlan([]);
+          setAiGroups([]);
+        },
+        onError: () => {
+          setErrorMessage("Failed to create task");
+        },
+      }
+    );
   }
 
   function handleImproveTask() {
@@ -216,10 +117,22 @@ export default function TasksPage() {
       return;
     }
 
-    improveTaskMutation.mutate({
-      title: title.trim(),
-      description: description.trim(),
-    });
+    improveTaskMutation.mutate(
+      {
+        title: title.trim(),
+        description: description.trim(),
+      },
+      {
+        onSuccess: (data) => {
+          setAiSuggestedTitle(data.suggested_title);
+          setAiSuggestedDescription(data.suggested_description ?? "");
+          setAiErrorMessage("");
+        },
+        onError: () => {
+          setAiErrorMessage("Failed to improve task");
+        },
+      }
+    );
   }
 
   function applyAiSuggestion() {
@@ -229,12 +142,30 @@ export default function TasksPage() {
 
   function handleGenerateAiPlan() {
     setAiPlanErrorMessage("");
-    taskPlanMutation.mutate();
+
+    taskPlanMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        setAiPlan(data.steps);
+        setAiPlanErrorMessage("");
+      },
+      onError: () => {
+        setAiPlanErrorMessage("Failed to generate AI plan");
+      },
+    });
   }
 
   function handleGroupTasksWithAi() {
     setAiGroupsErrorMessage("");
-    groupedTasksMutation.mutate();
+
+    groupedTasksMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        setAiGroups(data.groups);
+        setAiGroupsErrorMessage("");
+      },
+      onError: () => {
+        setAiGroupsErrorMessage("Failed to group tasks");
+      },
+    });
   }
 
   function handleDelete(taskId: number) {
@@ -285,13 +216,27 @@ export default function TasksPage() {
       return;
     }
 
-    updateTaskMutation.mutate({
-      id: taskId,
-      title: editTitle.trim(),
-      description: editDescription.trim(),
-      due_date: editDueDate || null,
-      priority: editPriority,
-    });
+    updateTaskMutation.mutate(
+      {
+        id: taskId,
+        title: editTitle.trim(),
+        description: editDescription.trim(),
+        due_date: editDueDate || null,
+        priority: editPriority,
+      },
+      {
+        onSuccess: () => {
+          setEditingTaskId(null);
+          setEditTitle("");
+          setEditDescription("");
+          setEditDueDate("");
+          setEditPriority(3);
+        },
+        onError: () => {
+          setErrorMessage("Failed to update task");
+        },
+      }
+    );
   }
 
   if (tasksQuery.isLoading) {
@@ -348,74 +293,16 @@ export default function TasksPage() {
         onApplyAiSuggestion={applyAiSuggestion}
       />
 
-      <section className="section">
-        <h2 className="section-title">AI Tools</h2>
-
-        <div className="button-row">
-          <button
-            className="button"
-            type="button"
-            onClick={handleGenerateAiPlan}
-            disabled={taskPlanMutation.isPending}
-          >
-            {taskPlanMutation.isPending
-              ? "Generating plan..."
-              : "Generate AI Plan"}
-          </button>
-
-          <button
-            className="button button-secondary"
-            type="button"
-            onClick={handleGroupTasksWithAi}
-            disabled={groupedTasksMutation.isPending}
-          >
-            {groupedTasksMutation.isPending
-              ? "Grouping tasks..."
-              : "Group Tasks with AI"}
-          </button>
-        </div>
-
-        {aiPlanErrorMessage && <p className="error-text">{aiPlanErrorMessage}</p>}
-        {aiGroupsErrorMessage && (
-          <p className="error-text">{aiGroupsErrorMessage}</p>
-        )}
-
-        {aiPlan.length > 0 && (
-          <div className="ai-box" style={{ marginTop: "16px" }}>
-            <h3>AI Task Plan</h3>
-            <ol>
-              {aiPlan.map((step) => (
-                <li key={step.id}>
-                  <strong>{step.title}</strong> - {step.reason}
-
-                  {step.due_date && (
-                    <div className="muted-text">
-                      Due: {new Date(step.due_date).toLocaleString()}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-
-        {aiGroups.length > 0 && (
-          <div className="ai-box" style={{ marginTop: "16px" }}>
-            <h3>AI Task Groups</h3>
-
-            {aiGroups.map((group) => (
-              <div key={group.group_name} style={{ marginBottom: "12px" }}>
-                <h4>{group.group_name}</h4>
-                <ul>
-                  {group.tasks.map((task) => (
-                    <li key={task.id}>{task.title}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <AiToolsPanel
+        aiPlan={aiPlan}
+        aiGroups={aiGroups}
+        aiPlanErrorMessage={aiPlanErrorMessage}
+        aiGroupsErrorMessage={aiGroupsErrorMessage}
+        isGeneratingPlan={taskPlanMutation.isPending}
+        isGroupingTasks={groupedTasksMutation.isPending}
+        onGeneratePlan={handleGenerateAiPlan}
+        onGroupTasks={handleGroupTasksWithAi}
+      />
 
       <TaskFilters
         search={search}
