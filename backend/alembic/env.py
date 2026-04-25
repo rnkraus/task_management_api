@@ -10,7 +10,7 @@ import os
 from dotenv import load_dotenv
 
 from app.core.db import Base
-from app.models import user
+from app.models import user # noqa: F401
 from app.models import task # noqa: F401
 
 BASE_DIR = Path(__file__).resolve().parent.parent
