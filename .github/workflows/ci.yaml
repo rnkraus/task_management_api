@@ -18,7 +18,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U taskuser"
+          --health-cmd="pg_isready -U taskuser -d taskdb_test"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=5
@@ -38,13 +38,12 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements-dev.txt
+        run: pip install -r backend/requirements-dev.txt
 
       - name: Run lint
-        run: |
-          ruff check .
+        working-directory: backend
+        run: ruff check .
 
       - name: Run tests
-        run: |
-          pytest -v
+        working-directory: backend
+        run: pytest -v
