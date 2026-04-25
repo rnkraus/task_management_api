@@ -9,9 +9,9 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-from backend.app.core.db import Base
-from backend.app.models import user
-from backend.app.models import task # noqa: F401
+from app.core.db import Base
+from app.models import user
+from app.models import task # noqa: F401
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env.local", override=True)

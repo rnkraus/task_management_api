@@ -97,8 +97,22 @@ def test_group_tasks_returns_grouped_tasks(client, get_token, monkeypatch):
 
     def fake_group_tasks(tasks):
         assert tasks == [
-            {"id": 1, "title": "Fix login bug"},
-            {"id": 2, "title": "Buy groceries"},
+            {
+                "id": 1,
+                "title": "Fix login bug",
+                "description": "Auth",
+                "completed": False,
+                "priority": 3,
+                "due_date": None,
+            },
+            {
+                "id": 2,
+                "title": "Buy groceries",
+                "description": "Milk and bread",
+                "completed": False,
+                "priority": 3,
+                "due_date": None,
+            },
         ]
         return {
             "groups": [
@@ -115,10 +129,7 @@ def test_group_tasks_returns_grouped_tasks(client, get_token, monkeypatch):
 
     monkeypatch.setattr("app.api.ai.group_tasks", fake_group_tasks)
 
-    response = client.get(
-        "/ai/group-tasks",
-        headers=headers,
-    )
+    response = client.get("/ai/group-tasks", headers=headers)
 
     assert response.status_code == 200
     assert response.json() == {
@@ -152,8 +163,22 @@ def test_plan_returns_ordered_steps(client, get_token, monkeypatch):
 
     def fake_create_task_plan(tasks):
         assert tasks == [
-            {"id": 1, "title": "Fix login bug"},
-            {"id": 2, "title": "Write tests"},
+            {
+                "id": 1,
+                "title": "Fix login bug",
+                "description": "Auth",
+                "completed": False,
+                "priority": 3,
+                "due_date": None,
+            },
+            {
+                "id": 2,
+                "title": "Write tests",
+                "description": "Pytest",
+                "completed": False,
+                "priority": 3,
+                "due_date": None,
+            },
         ]
         return {
             "steps": [
@@ -161,21 +186,20 @@ def test_plan_returns_ordered_steps(client, get_token, monkeypatch):
                     "id": 1,
                     "title": "Fix login bug",
                     "reason": "This blocks core functionality.",
+                    "due_date": None,
                 },
                 {
                     "id": 2,
                     "title": "Write tests",
                     "reason": "Tests should validate the fix.",
+                    "due_date": None,
                 },
             ]
         }
 
     monkeypatch.setattr("app.api.ai.create_task_plan", fake_create_task_plan)
 
-    response = client.get(
-        "/ai/plan",
-        headers=headers,
-    )
+    response = client.get("/ai/plan", headers=headers)
 
     assert response.status_code == 200
     assert response.json() == {
@@ -184,11 +208,13 @@ def test_plan_returns_ordered_steps(client, get_token, monkeypatch):
                 "id": 1,
                 "title": "Fix login bug",
                 "reason": "This blocks core functionality.",
+                "due_date": None,
             },
             {
                 "id": 2,
                 "title": "Write tests",
                 "reason": "Tests should validate the fix.",
+                "due_date": None,
             },
         ]
     }
@@ -225,7 +251,16 @@ def test_group_tasks_filters_invalid_titles(client, get_token, monkeypatch):
     client.post("/tasks", json={"title": ""}, headers=headers)
 
     def fake_group(tasks):
-        assert tasks == [{"id": 1, "title": "ok task"}]
+        assert tasks == [
+            {
+                "id": 1,
+                "title": "ok task",
+                "description": None,
+                "completed": False,
+                "priority": 3,
+                "due_date": None,
+            }
+        ]
         return {"groups": []}
 
     monkeypatch.setattr("app.api.ai.group_tasks", fake_group)
